@@ -1,27 +1,51 @@
 \relax 
-\@writefile{toc}{\contentsline {section}{\numberline {1}Linear Filtering in Space}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Informal Explanation}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Formal Mathematical Formulation}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Image Gradient}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Informal Explanation}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Formal Mathematical Formulation}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Filters and the Effect of Noise}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Informal Explanation}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Formal Mathematical Formulation}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Enhancement Filters (Derivative of Gaussian)}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Informal Explanation}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Formal Mathematical Formulation}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Local Features: Corners and Autocorrelation}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Informal Explanation}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Formal Mathematical Formulation}{3}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Image Segmentation by Thresholding}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Definition and Choice of Global Threshold}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Global Automatic Thresholding: Otsu's Method}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7}Image Segmentation by Clustering: K-Means}{6}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Informal Explanation}{6}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Formal Mathematical Formulation}{6}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Pros, Cons, and Choosing $K$}{6}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Superpixel Computation: SLIC}{7}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Informal Explanation}{7}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Formal Mathematical Formulation}{7}{}\protected@file@percent }
-\gdef \@abspage@last{7}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Pixel Basics, Image Types, and Color}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Image Types and Pixel Contents}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Dynamic Range and Quantization}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Numerical Example:}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Color Image Processing}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Numerical Example:}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Global Descriptors and Image Segmentation}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}The Goal: Image Segmentation}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Brightness Histograms and Binarization}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Numerical Example:}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}The Challenge of Contrast}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Dealing with Color}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Image Quantization}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Numerical Example:}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Summary of Global Descriptors (Histograms)}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Linear Filters and Local Features}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Linear Filtering and Convolution}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Numerical Example:}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Image Gradients and Edges}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Image Gradient: Numerical Example}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}Calculate Partial Derivatives}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.2}Calculate Gradient Magnitude}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.3}Calculate Gradient Orientation}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}The Effect of Noise and Gaussian Smoothing}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Local Features: Corners}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.1}The Autocorrelation Function}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.2}The Autocorrelation Matrix ($A$)}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.3}Corner Numerical Example}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Image Segmentation}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Core Concept: Uniformity}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Mathematical Definition}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Methods Overview}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Supervision Levels}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.2}Technical Approaches}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Thresholding and Motion Segmentation}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Basic Thresholding Concepts}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.1}Global Binary Thresholding}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.2}Multiple Thresholding}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Motion Segmentation}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Automatic Global Threshold Selection}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.1}The Iterative Algorithm}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.2}Numerical Example}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Otsu's Method for Global Thresholding}{9}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Mathematical Formulation}{9}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Optimization Criterion}{9}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Numerical Example}{9}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Improving Thresholding}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Image Smoothing}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Variable (Local) Thresholding}{10}{}\protected@file@percent }
+\gdef \@abspage@last{10}

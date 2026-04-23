@@ -1,128 +1,258 @@
 \documentclass{article}
-\usepackage{amsmath}
-\usepackage{amssymb}
+\usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \geometry{a4paper, margin=1in}
+\usepackage{amsmath}
 
-\title{Comprehensive Notes on Image Processing Concepts}
-\author{Computational Vision Study Guide}
+\title{Computational Vision}
+\author{Diego Chiola}
 \date{}
 
 \begin{document}
-
 \maketitle
 
-\section{Linear Filtering in Space}
-\subsection{Informal Explanation}
-Think of linear filtering as sliding a small grid of numbers (called a "kernel" or "mask") over an image to calculate a new value for every pixel. Depending on the numbers in the kernel, this process can average out noisy pixels, sharpen blurred details, or enhance certain features like edges. 
+\section{Pixel Basics, Image Types, and Color}
 
-\subsection{Formal Mathematical Formulation}
-In linear cases, filtering corresponds to applying a mathematical operation called convolution to an image signal $f$. If $f$ is the original image and $k$ is the kernel, the filtered image $g$ is defined continuously as $g = f * k$. 
-
-For a discrete, two-dimensional digital image, convolution in the space domain is formulated as:
-$$g[x,y] = \sum_{m}\sum_{l} f[x-m, y-l]k[m,l]$$
-
-\textbf{Breaking down the terms:}
+\subsection{Image Types and Pixel Contents}
+When we think of digital images, we usually think of standard photographs. However, in computational vision, the value stored inside a pixel depends entirely on what kind of sensor captured the image:
 \begin{itemize}
-    \item $g[x,y]$: The new, filtered pixel value at the specific row $x$ and column $y$ in the output image.
-    \item $f[x-m, y-l]$: The pixel value in the original image. The subtraction of $m$ and $l$ represents shifting the focus around the target pixel to look at its neighbors.
-    \item $k[m,l]$: The weight assigned by the kernel at position $(m,l)$. The kernel acts as a filter matrix; the size of this matrix dictates the bounds of the summation (e.g., a $3 \times 3$ kernel means $m$ and $l$ range from $-1$ to $1$).
-    \item \textbf{The mechanism:} For every pixel $(x,y)$, the equation multiplies the neighboring pixels by the corresponding weights in the kernel, sums them all up, and assigns that single total value to the new pixel $g[x,y]$.
+    \item \textbf{Pictorial Digital Images (Photos):} These capture light intensity (yielding black-and-white images) or color.
+    \item \textbf{Range Images:} Instead of light, the pixels store \textbf{depth information} (how far away an object is from the sensor). This is exactly how tools like Microsoft Kinect or Apple's FaceID operate.
+    \item \textbf{Medical Images:} Pixels represent the radiation absorbance level of different tissues (e.g., X-rays or CT scans).
+    \item \textbf{Thermal Images:} Pixels capture heat signatures, allowing vision in complete darkness.
 \end{itemize}
 
-\section{Image Gradient}
-\subsection{Informal Explanation}
-If you imagine an image as a 3D topographic map where bright pixels are high mountains and dark pixels are deep valleys, the image gradient tells you two things about any spot on the map: the direction of the steepest uphill slope, and exactly how steep that slope is. 
+\subsection{Dynamic Range and Quantization}
+The \textbf{dynamic range} of an image refers to the total number of distinctive values that can possibly occur in the image. Think of this as the "palette" of available shades.
 
-\subsection{Formal Mathematical Formulation}
-The gradient is a vector composed of partial derivatives. It points in the direction of the most rapid change in image intensity:
-$$\nabla f = \begin{bmatrix} g_x \\ g_y \end{bmatrix} = \begin{bmatrix} \frac{\partial f}{\partial x} \\ \frac{\partial f}{\partial y} \end{bmatrix}$$
-
-\textbf{Breaking down the terms:}
+This range is limited by two things: the physical capabilities of the camera sensor and the number of bits (data) we choose to assign to each pixel, a process called quantization.
 \begin{itemize}
-    \item $\nabla f$: The gradient vector of the image $f$.
-    \item $g_x = \frac{\partial f}{\partial x}$: The partial derivative with respect to $x$. It measures how rapidly the pixel intensity changes as you move horizontally. A high value means a strong vertical edge.
-    \item $g_y = \frac{\partial f}{\partial y}$: The partial derivative with respect to $y$. It measures how rapidly the pixel intensity changes as you move vertically. A high value means a strong horizontal edge.
+    \item \textbf{1-bit depth:} The simplest image. A pixel can only be $0$ or $1$, meaning the image is strictly black and white with no shades of gray.
+    \item \textbf{8-bit depth (Gray Level):} This is the standard for grayscale images. We associate 1 byte (which is 8 bits) to each pixel.
 \end{itemize}
 
-From this vector, we derive two critical measurements:
-\begin{enumerate}
-    \item \textbf{Gradient Magnitude (Steepness):}
-    $$M(x,y) = \sqrt{g_x^2 + g_y^2}$$
-    This uses the Pythagorean theorem to calculate the total length of the gradient vector. A large magnitude indicates a sharp, distinct edge.
+\paragraph{Numerical Example:}
+Because computers run on binary, an 8-bit depth means we have $2^8$ possible combinations.
+\[ 2^8 = 256 \text{ gray levels.} \]
+This means a pixel can hold any integer value from $0$ (pure black) to $255$ (pure white). A value of $128$ would be a perfect mid-tone gray.
+
+\subsection{Color Image Processing}
+To capture color, cameras use three different physical filters (sensitive to Red, Green, and Blue light) to acquire three separate monochrome images. These three layers are then stacked together to form a single RGB image.
+
+\begin{itemize}
+    \item \textbf{Full Color (24-bit):} In standard color images, every single pixel is described by a triplet of values: $(R, G, B)$.
+    \item Because each of the three channels gets its own 8-bit byte (256 possible values), a single color pixel requires 3 bytes of memory.
+\end{itemize}
+
+\paragraph{Numerical Example:}
+Let's look at the math behind "millions of colors". If Red, Green, and Blue each have 256 possible levels, the total number of color combinations is:
+\[ 256 \times 256 \times 256 = 16,777,216 \text{ possible colors.} \]
+For instance, a pixel with the triplet $(255, 0, 0)$ is telling the monitor to display maximum Red, zero Green, and zero Blue. A triplet of $(255, 255, 255)$ mixes all light to create pure white.
+
+When processing these images algorithmically, engineers typically face a choice: either process the R, G, and B channels completely independently and merge the results at the end, or devise ad-hoc algorithms that analyze the complex interplay of the colors together.
+
+
+
+
+
+
+
+
+\section{Global Descriptors and Image Segmentation}
+
+\subsection{The Goal: Image Segmentation}
+One of the most fundamental tasks in computational vision is \textbf{image segmentation}. This means dividing an image into meaningful parts, essentially detecting groups of pixels that are physically close together and visually similar. 
+
+We can evaluate "similarity" based on various attributes, such as:
+\begin{itemize}
+    \item \textbf{Brightness} (in grayscale images)
+    \item \textbf{Color}
+    \item \textbf{Texture} or \textbf{Motion}
+\end{itemize}
+
+The simplest example is separating a foreground object (like the cameraman in the slides) from the background.
+
+\subsection{Brightness Histograms and Binarization}
+To figure out which pixels belong to the foreground and which belong to the background, we use a \textbf{brightness histogram}. 
+\begin{itemize}
+    \item \textbf{What is it?} A histogram is a graph where the x-axis represents the possible pixel values (0 to 255 for an 8-bit image) and the y-axis represents the number of pixels in the image that have that exact value.
+\end{itemize}
+
+If an image has a dark background and a bright subject, the histogram will typically show two distinct "peaks" (a bimodal histogram). We can achieve segmentation through \textbf{binarization}. This involves picking a threshold value directly between those two peaks.
+
+\paragraph{Numerical Example:}
+Imagine an image where the background pixels mostly have values around 30 (dark gray) and the object pixels are around 200 (light gray).
+We can set a threshold at $T = 100$.
+The algorithm looks at every pixel $I(x,y)$:
+\begin{itemize}
+    \item If $I(x,y) < 100$, it sets the pixel to $0$ (pure black).
+    \item If $I(x,y) \ge 100$, it sets the pixel to $255$ (pure white).
+\end{itemize}
+The result is a clean binary image (a silhouette).
+
+\subsection{The Challenge of Contrast}
+The slides point out a critical reality: finding that perfect threshold is rarely easy! The shape of the histogram tells us a lot about the image quality:
+\begin{itemize}
+    \item \textbf{Dark image:} All pixels are bunched up on the left side (near 0).
+    \item \textbf{Bright image:} All pixels are bunched up on the right side (near 255).
+    \item \textbf{Low-contrast image:} The pixels are squished together in a narrow spike in the middle. It's very hard to separate objects here.
+    \item \textbf{High-contrast image:} The pixels are spread widely across the entire 0-255 range. This is ideal for thresholding.
+\end{itemize}
+
+\subsection{Dealing with Color}
+When we move to color images, segmentation gets trickier. The slides note that in color, values being numerically "close" in raw RGB code doesn't always mean they look visually "similar" to human eyes. 
+
+For example, a pixel in shadow might have entirely different RGB numbers than a sunlit pixel of the exact same object. Because of this, a careful choice of the \textbf{color space} (like moving from RGB to HSV - Hue, Saturation, Value) is highly recommended before trying to segment.
+
+\subsection{Image Quantization}
+Another technique mentioned is \textbf{Image Quantization}, which is the deliberate reduction of the image's dynamic range. Instead of having 256 shades of gray, we might force the image to only use 4 or 8 shades. This simplifies the image drastically, washing out minor noise and making it a very useful pre-processing step before attempting segmentation.
+
+\paragraph{Numerical Example:}
+Let's say we want to reduce 256 levels down to just 4 levels. We divide the range into 4 "buckets" of 64 values each.
+For a pixel with an original value of $150$:
+\[ New\_Value = \left\lfloor \frac{150}{64} \right\rfloor = 2 \]
+We map it to bucket "2", completely erasing the subtle differences between value 150 and value 160 (they both go into the same bucket).
+
+\subsection{Summary of Global Descriptors (Histograms)}
+Histograms are used to obtain an overall description of the image content.
+\begin{itemize}
+    \item \textbf{The Good:} They are very easy to compute and highly robust to geometrical variations. If you take a picture of an apple and rotate the photo 90 degrees, the histogram remains exactly the same.
+    \item \textbf{The Bad:} They completely \textbf{lose spatial information}. 
+\end{itemize}
+
+\textit{Context:} To understand why losing spatial information is bad, imagine an image of a chessboard. Now imagine a second image where the top half is solid black and the bottom half is solid white. Both images have 50\% black pixels and 50\% white pixels. Their histograms will be absolutely identical, even though the images look completely different!
+
+
+
+
+
+
+
+
+\section{Linear Filters and Local Features}
+
+\subsection{Linear Filtering and Convolution}
+A basic tool in image processing is the linear filter, used for noise reduction and signal enhancement. Filtering is achieved through a mathematical operation called \textbf{convolution}.
+
+In convolution, a small matrix called a \textbf{kernel} ($k$) is swept across the image signal ($f$) to produce a new filtered image ($g$):
+\[ g = f * k \]
+
+For a 2D image, the math is the sum of the element-wise products between the kernel and the image patch it currently covers:
+\[ g[x,y] = \sum_{m,l} f[x-m, y-l] k[m,l] \]
+
+\paragraph{Numerical Example:}
+Imagine a 1D row of pixels transitioning from dark to light: $f = [10, 10, 10, 50, 50, 50]$.
+We want to find the edge using a simple edge-detection kernel: $k = [-1, 0, 1]$.
+Let's center the kernel over the third pixel (value 10):
+\[ g[3] = (10 \times -1) + (10 \times 0) + (50 \times 1) = -10 + 0 + 50 = 40 \]
+The high output value ($40$) indicates that a sharp transition (an edge) was detected at this location.
+
+\subsection{Image Gradients and Edges}
+\textbf{Edges} are pixels at which the image values undergo a sharp variation. To find them, we compute the \textbf{Image Gradient}, a vector that points in the direction of the most rapid change in intensity.
+
+The gradient is composed of partial derivatives in the $x$ and $y$ directions:
+\[ \nabla f = \begin{bmatrix} g_x \\ g_y \end{bmatrix} = \begin{bmatrix} \frac{\partial f}{\partial x} \\ \frac{\partial f}{\partial y} \end{bmatrix} \]
+
+From this, we extract two crucial pieces of geometric information:
+\begin{itemize}
+    \item \textbf{Gradient Magnitude} (Edge strength): $M(x,y) = \sqrt{g_x^2 + g_y^2}$
+    \item \textbf{Gradient Orientation} (Edge direction): $\theta(x,y) = \arctan\left(\frac{g_y}{g_x}\right)$
+\end{itemize}
+
+\subsection{Image Gradient: Numerical Example}
+
+To calculate the gradient at a specific pixel, we estimate the partial derivatives using the \textbf{central difference} of its immediate neighbors.
+
+Imagine a $3 \times 3$ patch of grayscale image pixels, where we want to find the gradient of the center pixel $(x,y)$:
+
+\[ \text{Patch} = \begin{bmatrix} 10 & 10 & 10 \\ 10 & \textbf{50} & 90 \\ 10 & 90 & 170 \end{bmatrix} \]
+
+\subsubsection{Calculate Partial Derivatives}
+We find the rate of change in the horizontal ($x$) and vertical ($y$) directions. \textit{(Note: In standard image coordinates, the y-axis increases downwards).}
+
+\begin{itemize}
+    \item \textbf{Horizontal change ($g_x$):} Pixel to the Right - Pixel to the Left
+    \[ g_x = f(x+1, y) - f(x-1, y) = 90 - 10 = 80 \]
     
-    \item \textbf{Gradient Orientation (Direction):}
-    $$\theta(x,y) = \arctan\left(\frac{g_y}{g_x}\right)$$
-    This calculates the angle of the edge. It tells us the direction of the steepest change in intensity relative to the horizontal axis.
-\end{enumerate}
-
-\section{Filters and the Effect of Noise}
-\subsection{Informal Explanation}
-When trying to find changes in an image (like edges), taking a mathematical derivative is dangerous because derivatives measure *any* change, including random static (noise). To fix this, we first blur or "smooth" the image to average out the static, making the true, structural changes easier to detect.
-
-\subsection{Formal Mathematical Formulation}
-We smooth the signal using a Gaussian filter, which acts as a low-pass filter to remove high-frequency noise. The 2D Gaussian function is:
-$$h_\sigma(u,v) = \frac{1}{2\pi\sigma^2}e^{-\frac{u^2+v^2}{2\sigma^2}}$$
-
-\textbf{Breaking down the terms:}
-\begin{itemize}
-    \item $h_\sigma(u,v)$: The weight calculated for a pixel located at distance $(u,v)$ from the center of the kernel.
-    \item $e^{-\frac{u^2+v^2}{2\sigma^2}}$: The core exponential decay function. Because $u^2 + v^2$ is the squared distance from the center, this term ensures that pixels further from the center receive exponentially less weight.
-    \item $\sigma$ (Sigma): The standard deviation. It controls the "spread" or "fatness" of the Gaussian bell curve. A larger $\sigma$ means heavier blurring because farther pixels retain more weight.
-    \item $\frac{1}{2\pi\sigma^2}$: A normalization constant. It ensures that the sum of all weights in the continuous Gaussian distribution equals exactly 1, preventing the image from becoming artificially brighter or darker after filtering.
+    \item \textbf{Vertical change ($g_y$):} Pixel Below - Pixel Above
+    \[ g_y = f(x, y+1) - f(x, y-1) = 90 - 10 = 80 \]
 \end{itemize}
 
-By the associative property of convolution, we can combine the smoothing and the derivative step into a single operation, saving computational time:
-$$\frac{\partial}{\partial x}(h * f) = \left(\frac{\partial}{\partial x}h\right) * f$$
+\subsubsection{Calculate Gradient Magnitude}
+The magnitude measures the \textbf{strength} of the edge.
+\[ M(x,y) = \sqrt{g_x^2 + g_y^2} \]
+\[ M = \sqrt{80^2 + 80^2} = \sqrt{6400 + 6400} = \sqrt{12800} \approx 113.1 \]
 
-\section{Enhancement Filters (Derivative of Gaussian)}
-\subsection{Informal Explanation}
-Instead of blurring the image and *then* looking for edges, we can take the mathematical derivative of our blur filter to create a single "Enhancement Filter." This combined tool ignores static while actively highlighting vertical, horizontal, or angled lines in one pass.
+\subsubsection{Calculate Gradient Orientation}
+The orientation measures the \textbf{direction} of the most rapid increase in intensity.
+\[ \theta(x,y) = \arctan\left(\frac{g_y}{g_x}\right) \]
+\[ \theta = \arctan\left(\frac{80}{80}\right) = \arctan(1) = 45^\circ \]
 
-\subsection{Formal Mathematical Formulation}
-We derive basis filters by taking the derivative of the Gaussian formula. 
+\textbf{Conclusion:} The gradient vector points at a $45^\circ$ angle (down and to the right). The gradient always points in the direction of steepest ascent (from dark to bright).
 
-The first derivative of a Gaussian with respect to $x$ (sensitive to vertical structures) is:
-$$G_1^{0^\circ}(x,y) = \frac{\partial}{\partial x}e^{-(x^2+y^2)} = -2x e^{-(x^2+y^2)}$$
-\textit{(Note: Constants are often omitted in basis formulations to focus on the geometric shape of the filter).} Here, the $-2x$ term forces the filter to have positive weights on one side of the vertical axis and negative weights on the other, making it perfectly designed to detect vertical transitions.
+\subsection{The Effect of Noise and Gaussian Smoothing}
+Calculating derivatives is highly sensitive to noise. Taking the derivative of a noisy signal results in massive spikes that hide the true edges. 
 
-To find edges at any arbitrary angle $\theta$, we linearly combine the $x$ and $y$ basis filters:
-$$G_1^\theta(x,y) = \cos(\theta)G_1^{0^\circ} + \sin(\theta)G_1^{90^\circ}$$
-This means we only need to compute the $x$ and $y$ derivatives once, and we can find edges at any angle by mixing them with sine and cosine weights.
+\textbf{The Solution:} We must smooth the image before taking the derivative. We typically use a \textbf{Gaussian Filter}, which acts as a low-pass filter to blur out random noise.
+\[ h_\sigma(u,v) = \frac{1}{2\pi\sigma^2} e^{-\frac{u^2+v^2}{2\sigma^2}} \]
 
-\section{Local Features: Corners and Autocorrelation}
-\subsection{Informal Explanation}
-While an edge is a line, a corner is an intersection. If you look at a flat wall through a tiny window and move the window slightly, the view doesn't change. If you look at a straight edge and move parallel to it, the view doesn't change. But if you put that window over a *corner* and move it in *any* direction, the visual content shifts drastically. Autocorrelation is the mathematical way of shifting this window and measuring how severely the image changes.
+\textbf{Mathematical Shortcut:} Because convolution is associative, taking the derivative of a smoothed image is mathematically identical to smoothing the image with the \textit{derivative of the smoothing filter}:
+\[ \frac{\partial}{\partial x}(h * f) = \left(\frac{\partial}{\partial x}h\right) * f \]
+This saves computational power by allowing us to use a single "Derivative of Gaussian" filter. This logic forms the foundation of the famous \textbf{Canny Edge Detector}.
 
-\subsection{Formal Mathematical Formulation}
-We measure the stability of an image patch $I$ by calculating the Summed Square Difference (SSD) error when the patch is shifted by a small distance $(u,v)$.
-$$E_{AC}(u,v) = \sum_{x_i, y_i} [I(x_i + u, y_i + v) - I(x_i, y_i)]^2$$
+\subsection{Local Features: Corners}
+While edges are useful, they suffer from the aperture problem (you cannot tell where along an edge you are). \textbf{Corners} are patches with strong gradients in at least \textit{two} significantly different orientations, making them stable and "good features to match" across different images.
 
-To make this computationally feasible for small shifts, we use a First-Order Taylor Series Expansion to approximate the shifted image:
-$$I(x_i + u, y_i + v) \approx I(x_i, y_i) + \nabla I(x_i, y_i) \cdot \begin{bmatrix} u \\ v \end{bmatrix}$$
+\subsubsection{The Autocorrelation Function}
+To detect corners, we analyze how a local patch of pixels changes when shifted by a small vector $u$. We use the Summed Square Difference (SSD), also known as the autocorrelation function $E_{AC}(u)$:
 
-Substituting this back into the error function yields a quadratic approximation:
-$$E_{AC}(u,v) \approx \begin{bmatrix} u & v \end{bmatrix} A \begin{bmatrix} u \\ v \end{bmatrix}$$
+\[ E_{AC}(u) = \sum_{i}[I(x_{i}+u)-I(x_{i})]^{2} \]
 
-Where $A$ is the \textbf{Autocorrelation matrix} (or Structure Tensor):
-$$A = \begin{bmatrix} \sum I_x^2 & \sum I_x I_y \\ \sum I_x I_y & \sum I_y^2 \end{bmatrix}$$
+To make this computationally feasible, we approximate the shifted image using a Taylor series expansion:
+\[ I(x_{i}+u) \approx I(x_{i}) + \nabla I(x_{i})\cdot u \]
 
-\textbf{Breaking down the terms:}
+Substituting this back into the SSD equation cancels out the $I(x_i)$ terms, yielding a quadratic form:
+\[ E_{AC}(u) \approx \sum_{i}[\nabla I(x_{i})\cdot u]^{2} = u^{\top}Au \]
+
+\subsubsection{The Autocorrelation Matrix ($A$)}
+The matrix $A$ captures the gradient distribution within the patch:
+\[ A = \begin{bmatrix} \sum I_x^2 & \sum I_x I_y \\ \sum I_x I_y & \sum I_y^2 \end{bmatrix} \]
+
+By calculating the eigenvalues ($\lambda_1, \lambda_2$) of $A$, we can classify the local geometry:
 \begin{itemize}
-    \item $I_x, I_y$: The image gradients in the x and y directions.
-    \item $\sum I_x^2$: The sum of the squared horizontal gradients in the window.
-    \item $\sum I_y^2$: The sum of the squared vertical gradients in the window.
-    \item $\sum I_x I_y$: The cross-product term, which captures diagonal structures.
+    \item \textbf{Corner:} $\lambda_1$ and $\lambda_2$ are both large.
+    \item \textbf{Edge:} $\lambda_1 \gg \lambda_2$ or $\lambda_2 \gg \lambda_1$.
+    \item \textbf{Flat Region:} Both $\lambda_1$ and $\lambda_2$ are small.
 \end{itemize}
 
-\textbf{Eigenvalue Analysis:}
-We analyze the matrix $A$ by finding its eigenvalues, $\lambda_1$ and $\lambda_2$ (where $\lambda_2 > \lambda_1$). These eigenvalues represent the principal curvatures of the error surface—essentially telling us how fast the error grows when we shift the window.
+\subsubsection{Corner Numerical Example}
+Consider a $4 \times 4$ image grid containing a dark square (intensity 10) on a light background (intensity 100). We will compute the Autocorrelation Matrix for the inner $2 \times 2$ patch.
+
+\[ \text{Image} = \begin{bmatrix} 100 & 100 & 100 & 100 \\ 100 & \textbf{10} & \textbf{10} & 100 \\ 100 & \textbf{10} & \textbf{10} & 100 \\ 100 & 100 & 100 & 100 \end{bmatrix} \]
+
+\textbf{Step 1: Calculate Central Difference Gradients ($I_x, I_y$)}
+For the four inner pixels:
 \begin{itemize}
-    \item \textbf{Corner:} Both $\lambda_1$ and $\lambda_2$ are large. Shifting the window in *any* direction causes a massive error.
-    \item \textbf{Edge:} $\lambda_2 \gg \lambda_1$. Shifting perpendicular to the edge causes a large error, but shifting parallel to the edge causes almost no error.
-    \item \textbf{Flat region:} Both $\lambda_1$ and $\lambda_2$ are close to zero. Shifting the window in any direction causes almost no change.
+    \item \textbf{Top-Left:} $I_x = 10 - 100 = -90$, $I_y = 10 - 100 = -90$
+    \item \textbf{Top-Right:} $I_x = 100 - 10 = 90$, $I_y = 10 - 100 = -90$
+    \item \textbf{Bottom-Left:} $I_x = 10 - 100 = -90$, $I_y = 100 - 10 = 90$
+    \item \textbf{Bottom-Right:} $I_x = 100 - 10 = 90$, $I_y = 100 - 10 = 90$
 \end{itemize}
 
+\textbf{Step 2: Calculate Matrix Components}
+Squaring and summing these values over the 4 pixels:
+\[ \sum I_x^2 = (-90)^2 + (90)^2 + (-90)^2 + (90)^2 = 32400 \]
+\[ \sum I_y^2 = (-90)^2 + (-90)^2 + (90)^2 + (90)^2 = 32400 \]
+\[ \sum I_x I_y = 8100 - 8100 - 8100 + 8100 = 0 \]
+
+\textbf{Step 3: Construct Matrix $A$ and Extract Eigenvalues}
+\[ A = \begin{bmatrix} 32400 & 0 \\ 0 & 32400 \end{bmatrix} \]
+
+Because $A$ is a diagonal matrix, its eigenvalues are simply the diagonal entries:
+\[ \lambda_1 = 32400 \]
+\[ \lambda_2 = 32400 \]
+
+\textbf{Conclusion:} Because both eigenvalues are exceedingly large, the algorithm confidently classifies this patch as a \textbf{Corner}.
 
 
 
@@ -130,108 +260,169 @@ We analyze the matrix $A$ by finding its eigenvalues, $\lambda_1$ and $\lambda_2
 
 
 
-\newpage
-\section{Image Segmentation by Thresholding}
 
-\subsection{Definition and Choice of Global Threshold}
-\textbf{Informal Explanation:} Segmentation divides an image into meaningful regions (like separating an object from its background). Thresholding is the simplest approach: "Any pixel darker than a specific shade of gray is one region; anything lighter is the other." The primary challenge is choosing that magic threshold number. 
+\section{Image Segmentation}
+Image segmentation is a fundamental task in computational vision that involves partitioning a digital image into multiple segments (sets of pixels, also known as image objects).
+ The goal of segmentation is to simplify and/or change the representation of an image into something that is more meaningful and easier to analyze.
 
-As clearly illustrated in your provided Brightness Histogram, a reliable way to find this number is by looking for a "valley" between two distinct peaks (a bimodal distribution). The sharp peak on the left (around values 10-20) represents a massive cluster of dark pixels, while the broader peak on the right (around 150-180) represents the brighter pixels. The dashed vertical line drawn at approximately $90$ perfectly demonstrates the ideal choice for a global threshold: it sits right in the valley, creating a boundary that cleanly separates the dark elements from the bright elements.
-
-\textbf{Formal Mathematical Formulation:}
-Thresholding converts a grayscale image $f(x,y)$ into a binary image $g(x,y)$ using a global threshold value $T$. Based on the provided histogram, this would be set as $T \approx 90$.
-$$
-g(x,y) = 
-\begin{cases} 
-1 & \text{if } f(x,y) > T \\
-0 & \text{if } f(x,y) \leq T 
-\end{cases}
-$$
-The probability of occurrence of intensity level $i$ in an image is given by the normalized histogram (which represents the exact blue curve shown in your image):
-$$p_i = \frac{n_i}{N}$$
-where $n_i$ is the number of pixels with intensity $i$ (the height on the y-axis), and $N$ is the total number of pixels. A global threshold $T$ is chosen by analyzing this probability distribution $p_i$, explicitly searching for the local minimum between the two prominent modes, just as the dashed line indicates.
-
-\subsection{Global Automatic Thresholding: Otsu's Method}
-\textbf{Informal Explanation:} Guessing the threshold $T$ manually by looking at a histogram is unreliable. Otsu's method is an algorithm that finds the *perfect* threshold automatically. It tests every possible shade of gray ($0$ to $255$) and calculates a score. It finds the point where the foreground and background pixel groups are as distinctly separated from each other as possible (maximizing "between-class variance").
-
-\textbf{Formal Mathematical Formulation (Exhaustive):}
-Otsu's method assumes the image contains two classes of pixels: $C_0$ (background, intensities $[0, k]$) and $C_1$ (foreground, intensities $[k+1, L-1]$). 
-
-For any chosen threshold $k$, we define the probabilities of class occurrence:
-$$\omega_0(k) = \sum_{i=0}^k p_i \quad \text{and} \quad \omega_1(k) = \sum_{i=k+1}^{L-1} p_i = 1 - \omega_0(k)$$
-
-The mean intensity values for each class are:
-$$\mu_0(k) = \sum_{i=0}^k i \frac{p_i}{\omega_0(k)} \quad \text{and} \quad \mu_1(k) = \sum_{i=k+1}^{L-1} i \frac{p_i}{\omega_1(k)}$$
-
-The total mean intensity of the entire image is:
-$$\mu_T = \sum_{i=0}^{L-1} i p_i = \omega_0(k)\mu_0(k) + \omega_1(k)\mu_1(k)$$
-
-The goal of Otsu's method is to maximize the \textit{between-class variance} ($\sigma_B^2$). The variance between the two classes is defined as the squared distance of the class means from the total mean, weighted by their probabilities:
-$$\sigma_B^2(k) = \omega_0(k)(\mu_0(k) - \mu_T)^2 + \omega_1(k)(\mu_1(k) - \mu_T)^2$$
-
-Through algebraic simplification, this can be written in a much faster-to-compute form:
-$$\sigma_B^2(k) = \omega_0(k) \omega_1(k) (\mu_1(k) - \mu_0(k))^2$$
-
-\textbf{The Algorithm:} Otsu's method calculates $\sigma_B^2(k)$ for every possible threshold $k$ from $0$ to $L-1$. The optimal threshold $T$ is the value of $k$ that maximizes $\sigma_B^2(k)$. (Note: Maximizing between-class variance is mathematically equivalent to minimizing the within-class variance).
-
-\section{Image Segmentation by Clustering: K-Means}
-\subsection{Informal Explanation}
-If an image has multiple colored objects (e.g., a green frog on a brown log against a blue sky), binary thresholding fails. K-Means clustering is like picking $K$ random colors, assigning every pixel to whichever of those $K$ colors it is closest to, and then averaging the colors in each group to find a better center. You repeat this until the groups stop changing.
-
-\subsection{Formal Mathematical Formulation}
-K-means partitions $N$ observations (pixels) into $K$ clusters ($S = \{S_1, S_2, \dots, S_K\}$). The algorithm minimizes the \textit{Sum of Squared Errors (SSE)} objective function:
-$$J = \sum_{j=1}^K \sum_{x_i \in S_j} ||x_i - c_j||^2$$
-
-\textbf{Breaking down the terms:}
+\subsection{Core Concept: Uniformity}
+Segmentation typically divides an image into regions that are uniform according to a specific quality or feature:
 \begin{itemize}
-    \item $J$: The total sum of squared distances (the error we want to minimize).
-    \item $K$: The predetermined number of clusters.
-    \item $x_i$: The feature vector of the $i$-th pixel (e.g., RGB values).
-    \item $c_j$: The centroid (mean) of cluster $j$.
-    \item $||x_i - c_j||^2$: The squared Euclidean distance between a pixel's features and its assigned cluster centroid.
+    \item \textbf{Brightness/Intensity:} Common light levels.
+    \item \textbf{Color:} Similarities in the color space.
+    \item \textbf{Motion:} Pixels moving with the same velocity/direction.
 \end{itemize}
 
-\subsection{Pros, Cons, and Choosing $K$}
-\textbf{Pros:}
-\begin{itemize}
-    \item Conceptually simple and relatively fast to compute.
-    \item Guarantees convergence to a local minimum.
-    \item Easily adapts to new feature spaces (like adding spatial $x, y$ coordinates to RGB).
-\end{itemize}
+\subsection{Mathematical Definition}
+Let $R$ represent the entire spatial region occupied by an image. Image segmentation is the process of partitioning $R$ into $n$ subregions $R_1, R_2, \dots, R_n$ such that:
 
-\textbf{Cons:}
-\begin{itemize}
-    \item \textbf{Requires $K$ in advance:} The algorithm cannot figure out how many objects are in the image on its own.
-    \item \textbf{Sensitive to Initialization:} Randomly picking bad starting centroids can cause the algorithm to get stuck in a bad local minimum.
-    \item \textbf{Assumes Spherical Clusters:} It uses Euclidean distance, meaning it struggles if the true data clusters are elongated, irregular, or overlapping.
-    \item \textbf{Sensitive to Outliers:} Extreme pixel values can drag the mean ($c_j$) heavily.
-\end{itemize}
-
-\textbf{How to Choose $K$:}
 \begin{enumerate}
-    \item \textbf{Domain Knowledge:} Often in image processing, we know what we are looking for (e.g., $K=2$ for foreground/background, $K=3$ for sky/grass/road).
-    \item \textbf{The Elbow Method:} Run K-means for multiple values of $K$ (e.g., $K=1$ to $10$). Plot the final SSE ($J$) against $K$. The error will always decrease as $K$ increases. The optimal $K$ is typically at the "elbow" of the curve, where adding more clusters no longer significantly reduces the error.
+    \item \textbf{Completeness:} $\bigcup_{i=1}^{n} R_i = R$. Every pixel must belong to a region.
+    \item \textbf{Connectivity:} $R_i$ is a connected set for $i=1, \dots, n$.
+    \item \textbf{Disjointness:} $R_i \cap R_j = \emptyset$ for all $i \neq j$. Regions cannot overlap.
+    \item \textbf{Uniformity Predicate:} $Q(R_i) = \text{TRUE}$ for $i=1, \dots, n$. All pixels in a region satisfy a logical predicate $Q$ (e.g., same intensity).
+    \item \textbf{Maximality:} $Q(R_i \cup R_j) = \text{FALSE}$ for any adjacent regions $R_i$ and $R_j$. Neighboring regions must be different according to the predicate $Q$.
 \end{enumerate}
 
-\section{Superpixel Computation: SLIC}
-\subsection{Informal Explanation}
-Superpixels are small, irregularly shaped "honeycomb" blocks of pixels that share similar colors and are physically close. SLIC (Simple Linear Iterative Clustering) is a highly efficient way to group pixels into these superpixels. It acts like a localized version of K-means, meaning it groups pixels quickly without comparing every pixel to the other side of the image.
+\subsection{Methods Overview}
+Segmentation methods can be broadly categorized based on the level of guidance and the visual cues used.
 
-\subsection{Formal Mathematical Formulation}
-SLIC adapts K-means by operating in a 5-dimensional feature space: $[l, a, b, x, y]$, where $l, a, b$ are from the CIELAB color space, and $x, y$ are spatial coordinates.
-
-Because color space and physical space have different scales, SLIC introduces a unified distance measure $D$:
-$$D = \sqrt{d_c^2 + \left(\frac{m}{S} d_s\right)^2}$$
-
-Where the color distance $d_c$ and spatial distance $d_s$ are:
-$$d_c = \sqrt{(l_j - l_i)^2 + (a_j - a_i)^2 + (b_j - b_i)^2}$$
-$$d_s = \sqrt{(x_j - x_i)^2 + (y_j - y_i)^2}$$
-
-\textbf{Breaking down the terms:}
+\subsubsection{Supervision Levels}
 \begin{itemize}
-    \item $D$: The final distance score used to assign pixels to superpixels.
-    \item $S$: The grid interval, roughly the expected width of a superpixel ($S = \sqrt{N/K}$).
-    \item $m$: A compactness parameter. If $m$ is large, spatial distance dominates, resulting in highly compact, grid-like superpixels. If $m$ is small, color dominates, allowing superpixels to adhere strictly to image boundaries.
+    \item \textbf{Unsupervised:} Segmentation is based purely on pixel and appearance information (low-level features).
+    \item \textbf{Supervised:} Segmentation is guided by semantic concepts or prior knowledge of specific object classes.
 \end{itemize}
+
+\subsubsection{Technical Approaches}
+\begin{itemize}
+    \item \textbf{Edge-based methods:} Look for discontinuities (edges) in the image to find boundaries between regions.
+    \item \textbf{Region-based methods:} Look for regions of similarity according to specific criteria. This is generally considered a more robust formulation.
+\end{itemize}
+
+\section{Thresholding and Motion Segmentation}
+
+This chapter focuses on \textbf{Thresholding}, a region-based segmentation method that groups pixels sharing similar intensity levels.
+
+\subsection{Basic Thresholding Concepts}
+The simplest form of segmentation is the binary case, where we separate an image into two classes: Foreground and Background. This is achieved by comparing each pixel intensity $f(x,y)$ to a global threshold $T$.
+
+\subsubsection{Global Binary Thresholding}
+The resulting image $g(x,y)$ is defined as:
+\begin{equation}
+g(x,y) = \begin{cases} 1 & \text{if } f(x,y) > T \\ 0 & \text{otherwise} \end{cases}
+\end{equation}
+Where 1 typically represents the foreground and 0 the background.
+
+\subsubsection{Multiple Thresholding}
+When an image contains multiple objects with distinct intensity ranges, a single threshold is insufficient. Multiple thresholds ($T_1, T_2, \dots$) can be used:
+\begin{equation}
+g(x,y) = \begin{cases} a & \text{if } f(x,y) > T_2 \\ b & \text{if } T_1 < f(x,y) \le T_2 \\ c & \text{otherwise} \end{cases}
+\end{equation}
+
+\subsection{Motion Segmentation}
+Motion segmentation is a practical application of thresholding where the "uniformity" criterion is motion rather than static intensity. By identifying pixels that change significantly between frames, we can extract moving objects from a static background. This is a binary segmentation task (Moving vs. Not Moving).
+
+\subsection{Automatic Global Threshold Selection}
+Instead of manually picking $T$, we can use an iterative algorithm to find the optimal value, typically located in the "valley" of a bimodal histogram.
+
+\subsubsection{The Iterative Algorithm}
+\begin{enumerate}
+    \item \textbf{Initial Estimate:} Select an initial $T$ (often the global mean intensity of the image).
+    \item \textbf{Segmentation:} Partition the image into two groups: $G_1$ (pixels $> T$) and $G_2$ (pixels $\le T$).
+    \item \textbf{Mean Computation:} Calculate the average intensity values $m_1$ and $m_2$ for groups $G_1$ and $G_2$ respectively.
+    \item \textbf{Update:} Compute a new threshold $T = \frac{1}{2}(m_1 + m_2)$.
+    \item \textbf{Iteration:} Repeat steps 2 through 4 until $T$ stabilizes (the change is smaller than a predefined epsilon).
+\end{enumerate}
+
+\subsubsection{Numerical Example}
+Suppose we have a set of 16 pixel intensities:
+\[ \{10, 12, 15, 20, 22, 25, 100, 110, 120, 130, 140, 150, 160, 170, 180, 200\} \]
+
+\textbf{Iteration 1:}
+\begin{itemize}
+    \item \textbf{Initial $T_0$:} Global mean $\approx 101$.
+    \item \textbf{Groups:} $G_1 = \{110, \dots, 200\}$ (9 pixels), $G_2 = \{10, \dots, 100\}$ (7 pixels).
+    \item \textbf{Means:} $m_1 = 151.1$, $m_2 = 29.1$.
+    \item \textbf{New $T$:} $\frac{1}{2}(151.1 + 29.1) = 90.1$.
+\end{itemize}
+
+\textbf{Iteration 2:}
+\begin{itemize}
+    \item \textbf{Thresholding with $T = 90.1$:} The value 100 now moves from $G_2$ to $G_1$.
+    \item \textbf{New Groups:} $G_1 = \{100, 110, \dots, 200\}$ (10 pixels), $G_2 = \{10, \dots, 25\}$ (6 pixels).
+    \item \textbf{New Means:} $m_1 = 146$, $m_2 = 17.3$.
+    \item \textbf{New $T$:} $\frac{1}{2}(146 + 17.3) = 81.65$.
+\end{itemize}
+The algorithm continues until the threshold value converges, effectively separating the dark cluster from the light cluster.
+
+\section{Otsu's Method for Global Thresholding}
+
+While iterative methods rely on heuristic averaging, Otsu's method is grounded in statistical discriminant analysis. Its objective is to segment foreground and background by maximizing the \textbf{between-class variance}. Computations are performed on the normalized image histogram.
+
+\subsection{Mathematical Formulation}
+Let the image have intensity levels from $0$ to $L-1$. The normalized histogram gives the probability $p_i$ of each intensity level $i$.
+
+We define a threshold $k$ ($0 < k < L-1$) that divides pixels into two classes:
+\begin{itemize}
+    \item $C_1$: Pixels with intensities $[0, k]$
+    \item $C_2$: Pixels with intensities $[k+1, L-1]$
+\end{itemize}
+
+The probabilities of a pixel belonging to $C_1$ or $C_2$ are:
+\begin{align}
+    P_1(k) &= \sum_{i=0}^{k} p_i \\
+    P_2(k) &= \sum_{i=k+1}^{L-1} p_i = 1 - P_1(k)
+\end{align}
+
+The mean intensities of the classes are:
+\begin{align}
+    m_1(k) &= \frac{1}{P_1(k)} \sum_{i=0}^{k} i p_i \\
+    m_2(k) &= \frac{1}{P_2(k)} \sum_{i=k+1}^{L-1} i p_i
+\end{align}
+
+The global mean of the entire image is $m_G = \sum_{i=0}^{L-1} i p_i$.
+
+\subsection{Optimization Criterion}
+Otsu's method finds the optimal threshold $k^*$ that maximizes the between-class variance $\sigma_B^2(k)$:
+\begin{equation}
+    k^* = \arg\max_{0 \le k \le L-1} \sigma_B^2(k)
+\end{equation}
+Where the between-class variance is defined as:
+\begin{equation}
+    \sigma_B^2(k) = P_1(k)(m_1(k) - m_G)^2 + P_2(k)(m_2(k) - m_G)^2
+\end{equation}
+
+\subsection{Numerical Example}
+Consider a 10-pixel image with 4 intensity levels ($L=4$). 
+Pixel values: $\{0, 0, 0, 1, 1, 2, 3, 3, 3, 3\}$.
+
+Probabilities: $p_0 = 0.3$, $p_1 = 0.2$, $p_2 = 0.1$, $p_3 = 0.4$.
+Global Mean: $m_G = 0(0.3) + 1(0.2) + 2(0.1) + 3(0.4) = 1.6$.
+
+We evaluate the variance for potential thresholds $k$:
+\begin{itemize}
+    \item \textbf{For $k=0$:} $P_1 = 0.3, P_2 = 0.7, m_1 = 0, m_2 \approx 2.28$. \\ $\sigma_B^2(0) = 0.3(0 - 1.6)^2 + 0.7(2.28 - 1.6)^2 \approx 1.09$.
+    \item \textbf{For $k=1$:} $P_1 = 0.5, P_2 = 0.5, m_1 = 0.4, m_2 = 2.8$. \\ $\sigma_B^2(1) = 0.5(0.4 - 1.6)^2 + 0.5(2.8 - 1.6)^2 = 1.44$.
+    \item \textbf{For $k=2$:} $P_1 = 0.6, P_2 = 0.4, m_1 \approx 0.67, m_2 = 3$. \\ $\sigma_B^2(2) = 0.6(0.67 - 1.6)^2 + 0.4(3 - 1.6)^2 \approx 1.30$.
+\end{itemize}
+The maximum variance is $1.44$ at $k=1$. Therefore, the optimal threshold is $T=1$.
+
+\section{Improving Thresholding}
+
+Global thresholding can fail if the image is noisy or if lighting is uneven.
+
+\subsection{Image Smoothing}
+Noisy images produce jagged histograms where it is difficult to find a clear valley. Applying Gaussian smoothing prior to thresholding smooths the histogram, making global thresholding algorithms (like Otsu's) significantly more effective.
+
+\subsection{Variable (Local) Thresholding}
+When an image has uneven illumination (e.g., shadows across a document), a single global threshold will fail. Variable thresholding solves this by subdividing the image or computing a unique threshold $T_{xy}$ for every pixel based on its local neighborhood.
+
+A common approach computes the threshold based on local mean ($m_{xy}$) and standard deviation ($\sigma_{xy}$):
+\begin{equation}
+    T_{xy} = a \sigma_{xy} + b m_{xy} \quad (a, b \ge 0)
+\end{equation}
+
+For text segmentation, a \textbf{moving average} approach is highly effective. It calculates the threshold $T_{xy} = b m_{xy}$ where $m$ is estimated using only the last $n$ visited pixels along a scan line.
+
 
 \end{document}
