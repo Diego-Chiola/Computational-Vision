@@ -61,7 +61,7 @@ When processing these images algorithmically, engineers typically face a choice:
 \section{Global Descriptors and Image Segmentation}
 
 \subsection{The Goal: Image Segmentation}
-One of the most fundamental tasks in computational vision is \textbf{image segmentation}. This means dividing an image into meaningful parts, essentially detecting groups of pixels that are physically close together and visually similar. 
+One of the most fundamental tasks in computational vision is \textbf{image segmentation}. This means dividing an image into meaningful parts, essentially detecting groups of pixels that are physically close together and visually similar.
 
 We can evaluate "similarity" based on various attributes, such as:
 \begin{itemize}
@@ -73,7 +73,7 @@ We can evaluate "similarity" based on various attributes, such as:
 The simplest example is separating a foreground object (like the cameraman in the slides) from the background.
 
 \subsection{Brightness Histograms and Binarization}
-To figure out which pixels belong to the foreground and which belong to the background, we use a \textbf{brightness histogram}. 
+To figure out which pixels belong to the foreground and which belong to the background, we use a \textbf{brightness histogram}.
 \begin{itemize}
     \item \textbf{What is it?} A histogram is a graph where the x-axis represents the possible pixel values (0 to 255 for an 8-bit image) and the y-axis represents the number of pixels in the image that have that exact value.
 \end{itemize}
@@ -100,7 +100,7 @@ The slides point out a critical reality: finding that perfect threshold is rarel
 \end{itemize}
 
 \subsection{Dealing with Color}
-When we move to color images, segmentation gets trickier. The slides note that in color, values being numerically "close" in raw RGB code doesn't always mean they look visually "similar" to human eyes. 
+When we move to color images, segmentation gets trickier. The slides note that in color, values being numerically "close" in raw RGB code doesn't always mean they look visually "similar" to human eyes.
 
 For example, a pixel in shadow might have entirely different RGB numbers than a sunlit pixel of the exact same object. Because of this, a careful choice of the \textbf{color space} (like moving from RGB to HSV - Hue, Saturation, Value) is highly recommended before trying to segment.
 
@@ -117,7 +117,7 @@ We map it to bucket "2", completely erasing the subtle differences between value
 Histograms are used to obtain an overall description of the image content.
 \begin{itemize}
     \item \textbf{The Good:} They are very easy to compute and highly robust to geometrical variations. If you take a picture of an apple and rotate the photo 90 degrees, the histogram remains exactly the same.
-    \item \textbf{The Bad:} They completely \textbf{lose spatial information}. 
+    \item \textbf{The Bad:} They completely \textbf{lose spatial information}.
 \end{itemize}
 
 \textit{Context:} To understand why losing spatial information is bad, imagine an image of a chessboard. Now imagine a second image where the top half is solid black and the bottom half is solid white. Both images have 50\% black pixels and 50\% white pixels. Their histograms will be absolutely identical, even though the images look completely different!
@@ -172,10 +172,10 @@ We find the rate of change in the horizontal ($x$) and vertical ($y$) directions
 
 \begin{itemize}
     \item \textbf{Horizontal change ($g_x$):} Pixel to the Right - Pixel to the Left
-    \[ g_x = f(x+1, y) - f(x-1, y) = 90 - 10 = 80 \]
-    
+          \[ g_x = f(x+1, y) - f(x-1, y) = 90 - 10 = 80 \]
+
     \item \textbf{Vertical change ($g_y$):} Pixel Below - Pixel Above
-    \[ g_y = f(x, y+1) - f(x, y-1) = 90 - 10 = 80 \]
+          \[ g_y = f(x, y+1) - f(x, y-1) = 90 - 10 = 80 \]
 \end{itemize}
 
 \subsubsection{Calculate Gradient Magnitude}
@@ -191,7 +191,7 @@ The orientation measures the \textbf{direction} of the most rapid increase in in
 \textbf{Conclusion:} The gradient vector points at a $45^\circ$ angle (down and to the right). The gradient always points in the direction of steepest ascent (from dark to bright).
 
 \subsection{The Effect of Noise and Gaussian Smoothing}
-Calculating derivatives is highly sensitive to noise. Taking the derivative of a noisy signal results in massive spikes that hide the true edges. 
+Calculating derivatives is highly sensitive to noise. Taking the derivative of a noisy signal results in massive spikes that hide the true edges.
 
 \textbf{The Solution:} We must smooth the image before taking the derivative. We typically use a \textbf{Gaussian Filter}, which acts as a low-pass filter to blur out random noise.
 \[ h_\sigma(u,v) = \frac{1}{2\pi\sigma^2} e^{-\frac{u^2+v^2}{2\sigma^2}} \]
@@ -263,7 +263,7 @@ Because $A$ is a diagonal matrix, its eigenvalues are simply the diagonal entrie
 
 \section{Image Segmentation}
 Image segmentation is a fundamental task in computational vision that involves partitioning a digital image into multiple segments (sets of pixels, also known as image objects).
- The goal of segmentation is to simplify and/or change the representation of an image into something that is more meaningful and easier to analyze.
+The goal of segmentation is to simplify and/or change the representation of an image into something that is more meaningful and easier to analyze.
 
 \subsection{Core Concept: Uniformity}
 Segmentation typically divides an image into regions that are uniform according to a specific quality or feature:
@@ -309,14 +309,14 @@ The simplest form of segmentation is the binary case, where we separate an image
 \subsubsection{Global Binary Thresholding}
 The resulting image $g(x,y)$ is defined as:
 \begin{equation}
-g(x,y) = \begin{cases} 1 & \text{if } f(x,y) > T \\ 0 & \text{otherwise} \end{cases}
+    g(x,y) = \begin{cases} 1 & \text{if } f(x,y) > T \\ 0 & \text{otherwise} \end{cases}
 \end{equation}
 Where 1 typically represents the foreground and 0 the background.
 
 \subsubsection{Multiple Thresholding}
 When an image contains multiple objects with distinct intensity ranges, a single threshold is insufficient. Multiple thresholds ($T_1, T_2, \dots$) can be used:
 \begin{equation}
-g(x,y) = \begin{cases} a & \text{if } f(x,y) > T_2 \\ b & \text{if } T_1 < f(x,y) \le T_2 \\ c & \text{otherwise} \end{cases}
+    g(x,y) = \begin{cases} a & \text{if } f(x,y) > T_2 \\ b & \text{if } T_1 < f(x,y) \le T_2 \\ c & \text{otherwise} \end{cases}
 \end{equation}
 
 \subsection{Motion Segmentation}
@@ -370,14 +370,14 @@ We define a threshold $k$ ($0 < k < L-1$) that divides pixels into two classes:
 
 The probabilities of a pixel belonging to $C_1$ or $C_2$ are:
 \begin{align}
-    P_1(k) &= \sum_{i=0}^{k} p_i \\
-    P_2(k) &= \sum_{i=k+1}^{L-1} p_i = 1 - P_1(k)
+    P_1(k) & = \sum_{i=0}^{k} p_i                  \\
+    P_2(k) & = \sum_{i=k+1}^{L-1} p_i = 1 - P_1(k)
 \end{align}
 
 The mean intensities of the classes are:
 \begin{align}
-    m_1(k) &= \frac{1}{P_1(k)} \sum_{i=0}^{k} i p_i \\
-    m_2(k) &= \frac{1}{P_2(k)} \sum_{i=k+1}^{L-1} i p_i
+    m_1(k) & = \frac{1}{P_1(k)} \sum_{i=0}^{k} i p_i     \\
+    m_2(k) & = \frac{1}{P_2(k)} \sum_{i=k+1}^{L-1} i p_i
 \end{align}
 
 The global mean of the entire image is $m_G = \sum_{i=0}^{L-1} i p_i$.
@@ -393,7 +393,7 @@ Where the between-class variance is defined as:
 \end{equation}
 
 \subsection{Numerical Example}
-Consider a 10-pixel image with 4 intensity levels ($L=4$). 
+Consider a 10-pixel image with 4 intensity levels ($L=4$).
 Pixel values: $\{0, 0, 0, 1, 1, 2, 3, 3, 3, 3\}$.
 
 Probabilities: $p_0 = 0.3$, $p_1 = 0.2$, $p_2 = 0.1$, $p_3 = 0.4$.
@@ -424,5 +424,409 @@ A common approach computes the threshold based on local mean ($m_{xy}$) and stan
 
 For text segmentation, a \textbf{moving average} approach is highly effective. It calculates the threshold $T_{xy} = b m_{xy}$ where $m$ is estimated using only the last $n$ visited pixels along a scan line.
 
+
+\section{Color Segmentation and K-Means Clustering}
+
+When moving from grayscale to color images, the feature space expands to multiple dimensions (e.g., 3D spaces like RGB or HSV). For generic color segmentation where no prior target color is specified, clustering methods like K-means are highly effective.
+
+\subsection{K-Means Clustering: The Concept}
+K-means is an unsupervised clustering algorithm. In the context of image segmentation, it plots every pixel as a point in a multidimensional color space and attempts to group these points into $K$ distinct clusters based on their proximity (color similarity).
+
+\subsection{The Mathematical Objective}
+Given a set of image pixels $(x_1, \dots, x_n)$, the goal is to partition the data into $K$ sets, $S = (S_1, \dots, S_K)$, to minimize the within-cluster variance. The objective function is:
+\begin{equation}
+    \arg\min_{S} \sum_{i=1}^{K} \sum_{x \in S_i} ||x - \mu_i||^2
+\end{equation}
+Where:
+\begin{itemize}
+    \item $K$ is the predefined number of clusters.
+    \item $x$ is the feature vector of a pixel (e.g., its RGB values).
+    \item $\mu_i$ is the centroid (mean vector) of cluster $S_i$.
+\end{itemize}
+
+\subsection{The Iterative Algorithm}
+K-means minimizes the objective function through the following iterative steps:
+\begin{enumerate}
+    \item \textbf{Random Initialization:} Select $K$ random points in the feature space to serve as the initial centroids.
+    \item \textbf{Points Association:} Calculate the distance between every pixel $x$ and all $K$ centroids. Assign each pixel to the cluster with the nearest centroid.
+    \item \textbf{Centroids Update:} Recalculate the position of the $K$ centroids by taking the mean of all pixels currently assigned to each cluster.
+    \item \textbf{Convergence Check:} Repeat Steps 2 and 3 until stability is reached (i.e., pixel assignments no longer change or centroid movement falls below a threshold).
+\end{enumerate}
+
+\subsection{Numerical Example: RGB Clustering}
+Consider an image with 6 pixels and $K=2$ clusters.
+
+\textbf{1. Data Points (RGB):}
+\begin{itemize}
+    \item $P_1(200, 0, 0), P_2(180, 20, 20), P_3(220, 10, 10)$ (Reddish)
+    \item $P_4(0, 150, 0), P_5(10, 170, 10), P_6(20, 130, 20)$ (Greenish)
+\end{itemize}
+
+\textbf{2. Initialization:}
+Assume initial centroids $C_1 = P_1(200, 0, 0)$ and $C_2 = P_4(0, 150, 0)$.
+
+\textbf{3. Assignment Step (Iteration 1):}
+Using Euclidean distance $D = \sqrt{\Delta R^2 + \Delta G^2 + \Delta B^2}$:
+\begin{itemize}
+    \item For $P_2$: $Dist(P_2, C_1) \approx 34.6$ vs $Dist(P_2, C_2) \approx 222.9 \rightarrow$ Cluster 1.
+    \item For $P_5$: $Dist(P_5, C_1) \approx 255.1$ vs $Dist(P_5, C_2) \approx 24.5 \rightarrow$ Cluster 2.
+\end{itemize}
+After checking all points, Cluster 1 contains $\{P_1, P_2, P_3\}$ and Cluster 2 contains $\{P_4, P_5, P_6\}$.
+
+\textbf{4. Update Step:}
+Calculate new centroids by taking the mean of assigned pixels:
+\begin{itemize}
+    \item $C_{1\_new} = \left( \frac{200+180+220}{3}, \frac{0+20+10}{3}, \frac{0+20+10}{3} \right) = (200, 10, 10)$
+    \item $C_{2\_new} = \left( \frac{0+10+20}{3}, \frac{150+170+130}{3}, \frac{0+10+20}{3} \right) = (10, 150, 10)$
+\end{itemize}
+The centroids have moved closer to the center of their respective color clouds. The process repeats until assignments no longer change.
+
+\subsection{Extended Feature Space: RGBXY}
+Standard K-means on RGB values groups pixels strictly by color, ignoring their physical location in the image. A red pixel in the top-left corner and a red pixel in the bottom-right corner will be placed in the same cluster. To encourage spatially contiguous segments, the feature space can be expanded to 5 dimensions: \textbf{RGBXY}. This forces the algorithm to consider both color similarity and spatial proximity when calculating the distance.
+
+\subsection{Pros, Cons, and the Choice of K}
+\begin{itemize}
+    \item \textbf{Pros:} The algorithm is simple to implement, understand, and computationally relatively fast.
+    \item \textbf{Cons:} Results can be non-deterministic due to the random initialization of centroids. Furthermore, it does not inherently prevent the formation of highly unbalanced clusters.
+    \item \textbf{Choosing K:} The number of clusters $K$ must be set a priori. A common solution to finding the optimal $K$ is to run the algorithm across multiple values of $K$ (e.g., $K=2, 3, 4, 5$) and evaluate the results using a cluster quality metric, such as the \textbf{Davies-Bouldin index}, to find the partition that yields the most distinct and cohesive clusters.
+\end{itemize}
+
+\section{Superpixels and the SLIC Algorithm}
+
+Superpixels provide a convenient primitive from which to compute local image features. They group pixels into compact, roughly uniform regions that respect object boundaries, capturing redundancy in the image and drastically reducing the complexity of subsequent computer vision tasks.
+
+\subsection{SLIC: Simple Linear Iterative Clustering}
+SLIC is an adaptation of the K-means algorithm designed specifically for generating superpixels. It performs a local clustering of pixels in a 5-dimensional space defined by $[l, a, b, x, y]$.
+\begin{itemize}
+    \item $l, a, b$: The pixel color vector in the CIELAB color space, chosen for its perceptual uniformity.
+    \item $x, y$: The spatial position of the pixel in the image.
+\end{itemize}
+
+\subsection{The Distance Metric ($D_s$)}
+Because CIELAB color distances and spatial plane distances have different scales, they cannot be directly combined using a simple Euclidean norm. SLIC introduces a specialized distance measure $D_s$ that normalizes the spatial distance.
+
+Given a cluster center $C_k = [l_k, a_k, b_k, x_k, y_k]^T$ and a pixel $i$ at $[l_i, a_i, b_i, x_i, y_i]^T$, the distances are computed as follows:
+\begin{align}
+    d_{lab} & = \sqrt{(l_k - l_i)^2 + (a_k - a_i)^2 + (b_k - b_i)^2} \\
+    d_{xy}  & = \sqrt{(x_k - x_i)^2 + (y_k - y_i)^2}                 \\
+    D_s     & = d_{lab} + \frac{m}{S} d_{xy}
+\end{align}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item $K$: The desired number of superpixels (the only required user input).
+    \item $S$: The regular grid interval between superpixels, defined as $S = \sqrt{N/K}$ where $N$ is the total number of pixels.
+    \item $m$: The compactness parameter. A higher $m$ emphasizes spatial proximity, resulting in more compact, rigidly square superpixels.
+\end{itemize}
+
+\subsection{Algorithm Complexity ($O(N)$)}
+Standard K-means evaluates distances from every pixel to every cluster center, resulting in $O(NKI)$ complexity. SLIC drastically reduces this by localizing the search. Since a superpixel occupies roughly $S^2$ area, SLIC restricts the pixel search to a $2S \times 2S$ region surrounding the cluster center. Consequently, a pixel is evaluated against no more than eight centers, granting the algorithm a strictly linear $O(N)$ complexity, regardless of $K$.
+
+\subsection{Algorithm Steps}
+\begin{enumerate}
+    \item \textbf{Initialization:} Sample $K$ cluster centers at regular grid intervals $S$. Initialize distance $d(i) = \infty$ and label $l(i) = -1$ for all pixels.
+    \item \textbf{Perturbation:} Move centers to the lowest gradient position in a $3 \times 3$ neighborhood to avoid noisy edges.
+    \item \textbf{Assignment:} For each center $k$, evaluate pixels in a $2S \times 2S$ region. Compute $D_s$. If $D_s < d(i)$, update $d(i) = D_s$ and assign the label $l(i) = k$.
+    \item \textbf{Update:} Recompute centers as the mean $[l, a, b, x, y]$ vector of all associated pixels.
+    \item \textbf{Convergence:} Repeat assignment and update until residual error converges.
+    \item \textbf{Connectivity:} Enforce spatial connectivity by merging small, stray, or disjoint segments with the largest neighboring cluster.
+\end{enumerate}
+
+\subsection{Numerical Example: Label Assignment}
+Suppose an image has $N = 100$ pixels and we want $K = 4$ superpixels.
+\begin{itemize}
+    \item Grid interval $S = \sqrt{100/4} = 5$.
+    \item Compactness parameter $m = 10$.
+\end{itemize}
+
+Target Pixel $P_i$: Located at $(4, 5)$ with color $(60, 0, 0)$. Initial state: $l(i) = -1$, $d(i) = \infty$.
+
+\textbf{Testing Cluster Center 1 ($C_1$):}
+Located at $(2, 2)$ with color $(50, 0, 0)$.
+\begin{align*}
+    d_{lab} & = \sqrt{(50 - 60)^2} = 10                               \\
+    d_{xy}  & = \sqrt{(2 - 4)^2 + (2 - 5)^2} = \sqrt{13} \approx 3.61 \\
+    D_s     & = 10 + \left(\frac{10}{5}\right) \times 3.61 = 17.22
+\end{align*}
+Since $17.22 < \infty$, update pixel: $d(i) = 17.22$, $l(i) = 1$.
+
+\textbf{Testing Cluster Center 2 ($C_2$):}
+Located at $(7, 5)$ with color $(65, 0, 0)$.
+\begin{align*}
+    d_{lab} & = \sqrt{(65 - 60)^2} = 5                      \\
+    d_{xy}  & = \sqrt{(7 - 4)^2 + (5 - 5)^2} = \sqrt{9} = 3 \\
+    D_s     & = 5 + \left(\frac{10}{5}\right) \times 3 = 11
+\end{align*}
+Since $11 < 17.22$, update pixel: $d(i) = 11$, $l(i) = 2$.
+
+Pixel $P_i$ successfully finds its nearest center and is assigned to Cluster 2.
+
+
+\section{The Goal of Image Matching}
+The core problem introduced in this section is determining how similar two images are, which is highly dependent on the application.
+The course breaks this down into two main approaches:
+\begin{itemize}
+    \item \textbf{Global Matching:} This involves computing a single, overarching descriptor for the entire image, such as a color histogram or
+          overall brightness mean. This is typically used for general tasks like image retrieval or broad image classification.
+    \item \textbf{Local Matching:} Instead of looking at the whole image, this method focuses on finding specific, localized
+          ``points of interest'' and matching them across different images. This is crucial for precise tasks like 3D reconstruction and image registration.
+\end{itemize}
+
+\subsection{The Local Matching Pipeline}
+We focuses heavily on the Local Matching approach. The standard three-step pipeline forms the backbone of the rest of the course:
+\begin{enumerate}
+    \item \textbf{Feature Detection:} Finding the specific ``interest points'' (like corners or blobs) on each image.
+    \item \textbf{Feature Description:} Computing a mathematical vector that describes the visual neighborhood around each detected point.
+    \item \textbf{Feature Matching:} Comparing these descriptions between two images to find the matching pairs.
+\end{enumerate}
+
+\subsection{Degrees of Difficulty in Matching}
+Local matching ranges from ``easy'' to ``much harder'' based on the transformations between the two images:
+\begin{itemize}
+    \item \textbf{Easy:} The images only have simple translations (shifting up/down/left/right).
+    \item \textbf{Harder:} The images undergo translation, changes in illumination, and slight deformations.
+    \item \textbf{Much Harder:} The images feature dramatic changes in the 3D viewpoint and heavy illumination changes.
+\end{itemize}
+
+\subsection{Integration from the DoG and SIFT Paper}
+To solve these ``much harder'' cases, like the NASA Mars Rover images, we cannot rely on simple pixel comparisons. David Lowe's paper
+introduces \textbf{SIFT (Scale-Invariant Feature Transform)} specifically to address this. The goal is to transform image data into
+coordinates that are invariant to image scaling and rotation, and highly robust against 3D viewpoint changes and lighting variations.
+This allows a single local feature to find its correct match even in a massive database of features.
+
+\section{Scale Invariant Feature detectors}
+In Chapter 1, we established the need to find ``interest points'' (like corners or blobs). However, simple corner detectors fail when
+the distance to the object changes. A leaf might look like a tiny blob from 100 meters away, but show sharp corners from 1 meter away.
+To perform robust matching, we need an algorithm that finds features regardless of how zoomed in or out the image is. David Lowe's SIFT
+(Scale-Invariant Feature Transform) solves this.
+
+\subsection{Building ``Scale-Space''}
+To teach a computer to look at an image at different scales, we blur it. Blurring removes high-frequency details, simulating how an object appears from further away.
+
+The ``scale space'' of an image is a function $L(x,y,\sigma)$, produced by convolving the original image $I(x,y)$ with a 2D Gaussian blur filter $G(x,y,\sigma)$:
+\begin{equation}
+    L(x,y,\sigma) = G(x,y,\sigma) * I(x,y)
+\end{equation}
+Where $\sigma$ (sigma) is the scale (amount of blur).
+
+\subsection{The Blob Finder: Laplacian of Gaussian (LoG)}
+To find interesting features at these scales, we look for ``blobs'' (uniform areas surrounded by sharp variations). The mathematical tool for finding blobs is the Laplacian, which measures the 2nd spatial derivative of the image.
+\begin{equation}
+    \nabla^2 L = \frac{\partial^2 L}{\partial x^2} + \frac{\partial^2 L}{\partial y^2}
+\end{equation}
+
+\subsubsection{Numerical Example: 1D LoG}
+Imagine a 1D row of pixel intensities with a bright blob in the center:
+\begin{center}
+    $I = [0, 0, 10, 10, 0, 0]$
+\end{center}
+The 1st derivative (difference between adjacent pixels) highlights the edges:
+\begin{center}
+    $I' = [0, 10, 0, -10, 0]$
+\end{center}
+The 2nd derivative (difference of differences) highlights the center of the peak and the surrounding dip:
+\begin{center}
+    $I'' = [10, -10, -10, 10]$
+\end{center}
+When applied in 2D to a blurred image, this filter looks like a ``Mexican hat''. The algorithm searches for the specific $\sigma$ where this 2nd derivative response is absolutely maximized.
+
+\subsection{The Genius Shortcut: Difference of Gaussians (DoG)}
+Calculating the 2nd derivative for every pixel at every possible scale is computationally expensive. Lowe's SIFT provides an optimization based on the heat diffusion equation: subtracting two images with different levels of Gaussian blur closely approximates the normalized Laplacian of Gaussian.
+\begin{equation}
+    D(x,y,\sigma) = L(x,y,k\sigma) - L(x,y,\sigma)
+\end{equation}
+
+\subsection{How Different Should the Two Scales Be? (The multiplier $k$)}
+This is a crucial parameter in SIFT. We don't just pick random blur levels. The scale space is divided into ``octaves''. An octave corresponds to doubling the value of $\sigma$.
+Within each octave, Lowe divides the space into an integer number of intervals, $s$. The scale multiplier $k$ between two adjacent blurred images is defined as:
+\begin{equation}
+    k = 2^{1/s}
+\end{equation}
+In his foundational paper, Lowe recommends $s = 3$ intervals per octave. Therefore, the difference in scale between two adjacent blurred images is $k = 2^{1/3} \approx 1.2599$.
+If your base scale is $\sigma = 1.6$, the next image in the stack is blurred at $\sigma = 1.6 \times 1.26 = 2.016$.
+
+\subsubsection{Numerical Example: DoG Calculation}
+Suppose at pixel coordinate $(50, 50)$, the intensity in the first blurred image $L(x,y,\sigma)$ is $145$. In the next progressively blurred image $L(x,y,k\sigma)$, the intensity is $130$. The DoG value for that pixel at that scale is:
+\begin{equation}
+    D(50,50,\sigma) = 130 - 145 = -15
+\end{equation}
+
+\subsection{Extrema Detection (Finding the Keypoints)}
+Once we have a 3D stack of DoG images (X, Y, and Scale), we look for local extrema (maxima or minima) to identify keypoints.
+
+A single pixel is compared against its 26 neighbors in the 3D scale-space:
+\begin{itemize}
+    \item 8 adjacent pixels in its current scale ($k\sigma$).
+    \item 9 pixels directly above it in the next scale ($k^2\sigma$).
+    \item 9 pixels directly below it in the previous scale ($\sigma$).
+\end{itemize}
+
+\subsection{Numerical Example: 3D Neighborhood Check}
+Imagine a $3 \times 3 \times 3$ cube of DoG values. The center pixel is our candidate.
+\begin{itemize}
+    \item \textbf{Scale $\sigma$ (Below):} All 9 pixels have values ranging from $-5$ to $12$.
+    \item \textbf{Scale $k\sigma$ (Current):} The center candidate has a value of \textbf{45}. Its 8 immediate neighbors range from $20$ to $38$.
+    \item \textbf{Scale $k^2\sigma$ (Above):} All 9 pixels have values ranging from $15$ to $30$.
+\end{itemize}
+Because $45$ is strictly greater than all 26 surrounding values, this coordinate $(x, y, k\sigma)$ is officially recorded as a keypoint!
+
+\subsection{Filtering Bad Keypoints (Additional Info)}
+Simply finding extrema isn't enough; some points are unstable. SIFT applies two more filters:
+\begin{enumerate}
+    \item \textbf{Low Contrast Filter:} If the absolute DoG value at the extremum is less than a threshold (Lowe uses $0.03$), it is discarded as noise.
+    \item \textbf{Edge Response Elimination:} DoG has a strong response along flat edges, which are terrible for matching (the aperture problem).
+          SIFT computes the Hessian matrix (2nd derivatives in x and y) at the keypoint. If the ratio of the principal curvatures indicates it's
+          an edge rather than a blob, the point is discarded.
+\end{enumerate}
+
+
+
+\section{Feature descriptors}
+In Chapter 2, we found the $(x, y)$ coordinates and scale $(\sigma)$ of our keypoints. To match them, we need to describe what the
+visual area around them looks like.
+
+\subsection{The Problem with ``Raw Patches''}
+The simplest method is to take a square window (a patch) of pixels around the keypoint and list the pixel intensities. However, if the camera rotates even slightly between two images,
+the pixels in that square window will completely shift. A pixel-by-pixel comparison (Sum of Squared Differences) will fail.
+We need a descriptor that is \textbf{invariant to rotation}.
+
+\subsection{Clarifying the Keypoint Neighborhood}
+A common confusion is assuming the descriptor is built from a single pixel. A keypoint is just a central coordinate.
+SIFT builds its descriptor by analyzing a \textbf{neighborhood} of pixels around that center point. The size of this neighborhood
+depends on the keypoint's characteristic scale $(\sigma)$ found in Chapter 2.
+
+For every pixel in this neighborhood, the computer calculates two values using finite differences:
+\begin{itemize}
+    \item \textbf{Gradient Magnitude $(m)$:} How sharp the contrast is (edge strength).
+    \item \textbf{Gradient Orientation $(\theta)$:} Which direction is the brightest (from $0^\circ$ to $360^\circ$).
+\end{itemize}
+
+\subsection{Finding ``North'': The 36-Bin Orientation Histogram}
+To make our descriptor immune to rotation, SIFT gives each keypoint its own distinct ``North'' based on the visual data around it.
+
+\subsubsection{How the 36 Bins Work}
+The algorithm creates a histogram with 36 bins. Since a full circle is $360^\circ$, each bin covers exactly $10^\circ$.
+\begin{itemize}
+    \item Bin 1: $0^\circ$ to $9^\circ$
+    \item Bin 2: $10^\circ$ to $19^\circ$
+    \item ...
+    \item Bin 36: $350^\circ$ to $359^\circ$
+\end{itemize}
+
+\subsubsection{Numerical Example: Voting for an Orientation}
+Imagine the neighborhood around our keypoint has 50 pixels. We calculate the angle and magnitude for each:
+\begin{itemize}
+    \item \textbf{Pixel A:} $\theta = 12^\circ$, Magnitude $= 5$. It belongs to \textbf{Bin 2}. We add 5 to Bin 2.
+    \item \textbf{Pixel B:} $\theta = 18^\circ$, Magnitude $= 10$. It also belongs to \textbf{Bin 2}. We add 10. (Bin 2 is now 15).
+    \item \textbf{Pixel C:} $\theta = 95^\circ$, Magnitude $= 2$. It belongs to \textbf{Bin 10}. We add 2 to Bin 10.
+\end{itemize}
+After processing all 50 pixels, we look at the 36 bins. Suppose \textbf{Bin 5 ($40^\circ - 49^\circ$)} has the highest total magnitude (a massive spike in the histogram).
+This means the dominant visual feature around this keypoint is pointing at roughly $45^\circ$. SIFT now rotates the entire coordinate system of this patch by $45^\circ$. \textbf{The patch is now rotationally invariant!}
+
+\subsection{Building the 128-Dimensional SIFT Descriptor}
+Now that the patch is scaled and rotated correctly, we build the actual mathematical fingerprint.
+
+\subsubsection{The Grid and the 8 Bins}
+\begin{enumerate}
+    \item Take a \textbf{$16 \times 16$ window} of pixels centered on the keypoint.
+    \item Divide this window into a \textbf{$4 \times 4$ grid}. This gives us 16 distinct ``sub-regions'', each containing $4 \times 4 = 16$ pixels.
+    \item Inside each of the 16 sub-regions, we create a new, smaller histogram. This one only has \textbf{8 bins} (each covering $45^\circ$: N, NE, E, SE, S, SW, W, NW).
+    \item We tally up the gradients of the 16 pixels into these 8 bins.
+\end{enumerate}
+
+\subsubsection{What Information is in the 8 Bins?}
+The 8 bins describe the geometry of the lines inside that specific sub-region.
+For example, look at the top-left sub-region. If it contains a sharp horizontal edge, the gradients will point straight up or straight down. Therefore, the ``North'' ($90^\circ$) and ``South'' ($270^\circ$) bins will have huge numbers, while the other 6 bins will be close to zero.
+
+\subsubsection{The Final Vector}
+You have 16 sub-regions. Every sub-region gives you 8 numbers (the 8 bins).
+\begin{center}
+    \textbf{16 sub-regions $\times$ 8 bins = 128 numbers.}
+\end{center}
+The final 128-dimensional descriptor is literally just a list of these numbers: $[v_1, v_2, v_3, ..., v_{128}]$. It tells the computer exactly how edges are spatially arranged around the keypoint.
+
+\subsection{Solving Illumination Invariance}
+What if one image was taken in bright daylight and the other at dusk? The 128 numbers will be drastically different because the gradient magnitudes will be smaller in the dark image.
+To fix this, we normalize the 128-dimensional vector to have a ``unit length'' of 1:
+\begin{equation}
+    \hat{v} = \frac{v}{\sqrt{v_1^2 + v_2^2 + ... + v_{128}^2}}
+\end{equation}
+By doing this, global contrast changes are cancelled out. SIFT also caps any single value at 0.2 and re-normalizes to protect against harsh, non-linear camera saturation.
+
+
+
+
+\section{Introduction to Feature Matching}
+Once local features are detected (Chapter 2) and described (Chapter 3), the final step in the pipeline is feature matching:
+finding the one-to-one correspondences between features in Image 1 and Image 2. This requires defining a \textbf{Similarity Measure}
+(how to score the match mathematically) and a \textbf{Matching Strategy} (how to decide which matches to keep).
+
+\subsection{Similarity Measures for Image Patches}
+When using raw image patches of size $W \times W$ (denoted as $N1$ and $N2$) instead of SIFT descriptors, two primary mathematical methods are used to compute their similarity.
+
+\subsubsection{Sum of Squared Differences (SSD)}
+SSD calculates the direct pixel-by-pixel intensity difference:
+\begin{equation}
+    \phi_{SSD}(N1,N2) = -\sum_{k,l=-\frac{W}{2}}^{\frac{W}{2}} (N1(k,l) - N2(k,l))^2
+\end{equation}
+The negative sign is applied so that a perfect match results in the maximum possible score ($0$), while increasingly dissimilar patches yield highly negative scores.
+
+\textbf{Numerical Example:}
+For two $2 \times 2$ patches:
+\begin{equation*}
+    N1 = \begin{bmatrix} 10 & 20 \\ 10 & 20 \end{bmatrix}, N2 = \begin{bmatrix} 12 & 18 \\ 10 & 20 \end{bmatrix}
+    SSD = - [ (10-12)^2 + (20-18)^2 + (10-10)^2 + (20-20)^2 ] = - [ 4 + 4 + 0 + 0 ] = \mathbf{-8}
+\end{equation*}
+
+\subsubsection{Normalized Cross Correlation (NCC)}
+SSD is highly sensitive to lighting changes. NCC corrects for affine changes in illumination by normalizing the pixels against the patch's mean ($\mu$) and standard deviation ($\sigma$):
+\begin{equation}
+    \phi_{NCC}(N1,N2) = \frac{\sum_{k,l=-\frac{W}{2}}^{\frac{W}{2}} (N1(k,l)-\mu_1)(N2(k,l)-\mu_2)}{W^2 \sigma_1 \sigma_2}
+\end{equation}
+Where $\mu_i$ is the mean brightness of patch $i$, and $\sigma_i$ is its standard deviation. This function returns a score exactly in the range $[-1, 1]$, where $1$ is a perfect match. By subtracting the mean, a bright image and a dark image of the exact same object will perfectly match.
+
+\subsection{Similarity Measures for Histograms}
+When matching SIFT descriptors (which are 128-bin histograms), Euclidean distance is standard, but the course also highlights \textbf{Histogram Intersection}:
+\begin{equation}
+    HI(H^1,H^2) = \sum_{i=1}^{N_{bin}} \min(H_i^1, H_i^2)
+\end{equation}
+This measures the overlapping area between two histograms.
+
+\textbf{Numerical Example:}
+Let $H^1 = [10, \mathbf{5}, \mathbf{2}]$ and $H^2 = [\mathbf{8}, 20, 3]$.
+The intersection is $\min(10,8) + \min(5,20) + \min(2,3) = 8 + 5 + 2 = \mathbf{15}$.
+
+\subsection{Matching Strategy: Lowe's Ratio Test}
+A Brute Force approach checks every feature against every other feature and picks the minimum distance. However, in environments with repeating patterns (like windows on a building), multiple features will look mathematically identical, leading to false matches.
+
+David Lowe introduced the \textbf{Ratio Test}:
+\begin{equation}
+    Ratio = \frac{\text{Distance to Best Match}}{\text{Distance to Second Best Match}}
+\end{equation}
+If the ratio is low (e.g., $0.1$), the best match is uniquely excellent. If the ratio is high (e.g., $0.9$), it means the best match and second-best match are almost identical, indicating an ambiguous match. SIFT strictly rejects any match where this ratio is $> 0.8$.
+
+\subsection{Matching Through an Affinity Matrix}
+An Affinity Matrix $A$ represents the similarity between all pairs of features, where $A(i,j)$ is the score between feature $i$ in Image 1 and feature $j$ in Image 2. This approach can combine spatial location and visual appearance.
+
+\subsubsection{Spatial Vicinity (Distance Matrix $E$)}
+\begin{equation}
+    E(i,j) = e^{-\frac{||p_i^1 - p_j^2||^2}{2\sigma^2}}
+\end{equation}
+Here, $p_i^1$ and $p_j^2$ are the spatial $(X, Y)$ coordinates of the keypoints. $\sigma$ is a tolerance parameter dictating how much physical movement is allowed. If a point moves minimally, the squared distance $||p_i^1 - p_j^2||^2$ is small, and $e^0 \approx 1$.
+
+\subsubsection{Combined Affinity Matrix ($A$)}
+To combine the spatial score $E$ with the appearance score $NCC$, the formula is:
+\begin{equation}
+    A(i,j) = E(i,j) \times \frac{1}{2}(\phi_{NCC}(Q_i^1, Q_j^2) + 1)
+\end{equation}
+The expression $\frac{1}{2}(NCC + 1)$ shifts the NCC score from $[-1, 1]$ to $[0, 1]$. Therefore, an entry in $A$ will only approach $1.0$ if the features are physically close AND look visually identical.
+
+\subsubsection{Extracting Matches from $A$}
+To guarantee a 1-to-1 correspondence, a match at $(i,j)$ is only accepted if:
+\begin{enumerate}
+    \item $A(i,j)$ is the maximum value in row $i$.
+    \item $A(i,j)$ is the maximum value in column $j$.
+    \item $A(i,j) > \text{threshold}$.
+\end{enumerate}
 
 \end{document}
