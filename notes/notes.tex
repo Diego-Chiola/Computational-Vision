@@ -1074,7 +1074,8 @@ Between $t=1$ and $t=2$, optical flow estimates $\mathbf{u} = (2, 0)$. New posit
 The track for $c_1$ is $[(10,10), (11,9), (13,9)]$.
 
 \subsection{The Kalman Filter in Tracking}
-Because optical flow estimates are noisy and sometimes fail (due to occlusion or blurring), we use a \textbf{Kalman Filter} to maintain robust tracks.
+Because optical flow estimates are noisy and sometimes fail (due to occlusion or blurring), we use a \textbf{Kalman Filter} to 
+maintain robust tracks.
 
 \subsubsection{Key Roles of the Kalman Filter}
 \begin{itemize}
@@ -1086,8 +1087,193 @@ Because optical flow estimates are noisy and sometimes fail (due to occlusion or
 \subsection{The Data Association Problem}
 When tracking multiple targets simultaneously, the predictions of where targets will be in the next frame can overlap.
 
-If Track 1 and Track 2 are close to each other, their prediction ellipses might intersect. When a new corner is detected in that intersection area, the system faces the \textbf{Data Association Problem}: determining which track the newly detected measurement actually belongs to.
+If Track 1 and Track 2 are close to each other, their prediction ellipses might intersect. When a new corner is detected
+in that intersection area, the system faces the \textbf{Data Association Problem}: determining which track the newly detected
+measurement actually belongs to.
 
-Solutions typically involve calculating distances (like the Mahalanobis distance, which accounts for the shape of the uncertainty ellipse $P_t$) and assigning the measurement to the most probable track.
+Solutions typically involve calculating distances (like the Mahalanobis distance, which accounts for the shape of the uncertainty 
+ellipse $P_t$) and assigning the measurement to the most probable track.
+
+
+
+
+
+
+\section{Principles of 3D computer vision: Introduction}
+Before diving into complex math to extract 3D data from 2D images (passive vision), it is important to understand \textbf{Active 3D Sensors}. These are hardware solutions that actively emit energy into the environment to measure distance:
+\begin{itemize}
+    \item \textbf{Time-of-Flight (ToF):} These sensors measure the exact time it takes for a light pulse (like a laser) to bounce off an object and return to the photodetector.
+    \item \textbf{LIDAR / RADAR / IR:} LIDAR uses lasers for short/medium range, RADAR uses radio frequencies for medium/long range, and IR (Infrared) is often used for short-range depth cameras.
+\end{itemize}
+
+\subsection{The Geometry of Image Formation}
+When using standard cameras, we model how a 3D world gets flattened onto a 2D sensor using the \textbf{perspective projection} (or pinhole camera model).
+
+\begin{itemize}
+    \item \textbf{The 3D World Point:} We define a point in the real world using 3D coordinates relative to the camera: $P = (X, Y, Z)$.
+    \item \textbf{The 2D Image Point:} This 3D point projects onto the camera's image plane (the digital sensor) at a specific 2D pixel coordinate, located at a distance $f$ (the focal length) from the camera's optical center: $p = (x, y, f)$.
+\end{itemize}
+
+The mathematical projection is based on similar triangles:
+\begin{align*}
+    x &= f \frac{X}{Z} \\
+    y &= f \frac{Y}{Z}
+\end{align*}
+
+\textbf{Numerical Example:} \\
+Imagine your camera has a focal length $f = 50\text{ mm}$. You are looking at an object located $1000\text{ mm}$ to the right
+($X = 1000$), $500\text{ mm}$ up ($Y = 500$), and $5000\text{ mm}$ away from you in depth ($Z = 5000$). Where does it appear on
+the camera sensor?
+\begin{itemize}
+    \item $x = 50 \cdot (1000 / 5000) = 50 \cdot 0.2 = 10\text{ mm}$
+    \item $y = 50 \cdot (500 / 5000) = 50 \cdot 0.1 = 5\text{ mm}$
+\end{itemize}
+The object will be projected onto the sensor $10\text{ mm}$ to the right and $5\text{ mm}$ up from the center.
+
+\subsection{The Core Problem: Scale Ambiguity}
+The fundamental flaw of single-camera 2D vision is \textbf{Scale Ambiguity}. Because the perspective projection is a "lossy" and
+"non-invertible" transformation (meaning depth information $Z$ is lost during the projection), the camera cannot tell the difference
+without a prior knowledge between a small object up close and a massive object far away.
+
+\textbf{Revisiting the math example:} $X/Z = 1000/5000 = 0.2$. \\
+What if the object was twice as big and twice as far away? ($X = 2000, Z = 10000$). The ratio $2000 / 10000$ is still $0.2$. The
+object projects to the exact same $10\text{ mm}$ spot on the sensor!
+
+\subsection{The Solution: A Second View}
+To recover the lost depth, we add a second camera. By capturing the same 3D point $P$ from two different angles, it will project
+to point $p$ on the first image plane and $p'$ on the second image plane. Comparing the difference between these two 2D points
+allows us to compute the original depth.
+
+
+
+
+
+\section{Stereopsis}
+Stereo vision (or stereopsis) is the process of inferring 3D structure and distance from two or more images taken from different viewpoints. This field of computer vision is heavily inspired by human biology. Because our eyes are set slightly apart, each eye gets a slightly different view of the world. Our brain perceives 3D depth by calculating the difference in the retinal position of the objects we see. This difference is called \textbf{disparity}.
+
+\subsection{The Math of a Simple Stereo System}
+Imagine two identical cameras placed side-by-side, perfectly aligned, looking straight ahead.
+\begin{itemize}
+    \item $f$: The focal length of both cameras.
+    \item $T$: The "baseline," which is the physical physical distance between the optical centers of the two cameras.
+    \item $x_l$ and $x_r$: The horizontal pixel coordinates where a specific 3D point $P$ appears on the left and right image sensors, respectively.
+\end{itemize}
+
+The difference between these two points is the \textbf{disparity}: $d = |x_l - x_r|$. Depth ($Z$) is calculated using the following formula:
+\begin{equation}
+Z = \frac{fT}{d}
+\end{equation}
+
+\textbf{The Golden Rule of Stereo Vision:} Depth is \textit{inversely} proportional to disparity.
+\begin{itemize}
+    \item Large disparity = The object is very close.
+    \item Small disparity = The object is far away.
+    \item Zero disparity = The object is infinitely far away (like the horizon).
+\end{itemize}
+
+\textbf{Numerical Example:}\\
+Let's say you have a stereo camera rig where the lenses are $T = 100\text{ mm}$ apart, and both have a focal length of $f = 50\text{ mm}$. You take a picture of an object. On the left camera sensor, the object is at pixel coordinate $x_l = -10\text{ mm}$. On the right camera sensor, it is at $x_r = -30\text{ mm}$.
+\begin{itemize}
+    \item Disparity: $d = |-10 - (-30)| = 20\text{ mm}$.
+    \item Depth: $Z = \frac{50 \cdot 100}{20} = \frac{5000}{20} = 250\text{ mm}$.
+\end{itemize}
+
+\subsection{Geometric Derivation of the Depth Equation}
+Why does $Z = fT/d$ work? It is based on the exact same similar triangles principle from the pinhole camera model, applied twice.
+
+Imagine looking at the camera setup from a top-down view:
+\begin{enumerate}
+    \item Let the \textbf{left camera's optical center} be at the origin $(0, 0)$. 
+    \item Let the \textbf{right camera's optical center} be shifted to the right by the baseline $T$, so it sits at $(T, 0)$.
+    \item A 3D point $P$ exists in the real world at coordinates $(X, Z)$.
+\end{enumerate}
+
+\textbf{Left Camera Projection:}\\
+Using similar triangles, the light ray from $P$ to the left camera intersects the image plane (at distance $f$) at coordinate:
+\begin{equation}
+x_l = f \frac{X}{Z}
+\end{equation}
+
+\textbf{Right Camera Projection:}\\
+Because the right camera is physically moved to the right by $T$, the relative $X$ coordinate of the point $P$ from the perspective of the right camera is $(X - T)$. Using similar triangles again, the projection on the right image plane is:
+\begin{equation}
+x_r = f \frac{X - T}{Z}
+\end{equation}
+
+\textbf{Calculating Disparity:}\\
+Now, we define disparity $d$ as the difference between the left and right image coordinates:
+\begin{align*}
+d &= x_l - x_r \\
+d &= \left( f \frac{X}{Z} \right) - \left( f \frac{X - T}{Z} \right) \\
+d &= \frac{fX - f(X - T)}{Z} \\
+d &= \frac{fX - fX + fT}{Z} \\
+d &= \frac{fT}{Z}
+\end{align*}
+
+Solving for $Z$, we get our final depth equation:
+\begin{equation}
+Z = \frac{fT}{d}
+\end{equation}
+This beautifully shows that the $X$ coordinate (lateral position) cancels out entirely! Depth depends only on the camera properties ($f$, $T$) and the measured disparity ($d$).
+
+\subsection{The Two Main Problems of Stereopsis}
+While the formula is simple, making a computer execute it is difficult. Stereo vision covers two main problems:
+\begin{enumerate}
+    \item \textbf{The Correspondence Problem:} Given a specific pixel in the left image, how do we find the \textit{exact same} pixel in the right image? Solving this produces dense disparity maps.
+    \item \textbf{The 3D Reconstruction Problem:} Once we have all the disparities, how do we translate them back into the real world to build a full 3D point cloud?
+\end{enumerate}
+
+
+
+
+\section*{Introduction}
+To calculate depth using stereo vision, we must first determine the disparity ($d = x_l - x_r$). The \textbf{Correspondence Problem} is the challenge of figuring out which pixel in the right image corresponds to a specific pixel in the left image. To solve it, we must decide which image elements to match and which similarity measure to use.
+
+\section*{1. Sparse vs. Dense Correspondences}
+We can approach matching in two ways:
+\begin{itemize}
+    \item \textbf{Sparse Correspondences:} We only try to match highly distinct features, like corners or sharp edges. This is faster but only provides depth for a few specific points.
+    \item \textbf{Dense Correspondences:} We attempt to find a match for \textit{every single pixel} in the image to create a full ``disparity map''. In a standard color-coded disparity map, bright areas represent high disparities (objects closer to the camera), and dark areas represent low disparities (objects farther away).
+\end{itemize}
+
+\section*{2. Image Rectification}
+Searching an entire 2D image for a matching pixel is computationally massive. To simplify this, we mathematically warp the stereo pair of images in a process called \textbf{Rectification}. Rectification perfectly aligns the two cameras virtually so that their image planes are coplanar.
+
+Because of this geometry, a point on row $y$ in the left image will \textit{always} lie on the exact same row $y$ in the right image (conjugate points lie on corresponding scanlines). Instead of searching a whole 2D image, we only have to search a single 1D horizontal line!
+
+\section*{3. The Block Matching Algorithm (Dense Correspondences)}
+To find matches, we cannot simply compare single pixels, as many pixels share the same color/intensity. Instead, we use correlation methods applied to small image patches (a neighborhood or window of pixels).
+
+\textbf{Algorithm Sketch:}
+\begin{enumerate}
+    \item Take a small window $W$ (e.g., a $5 \times 5$ pixel box) centered on a pixel at coordinates $(i,j)$ in the left image $I_l$.
+    \item Slide an identical window along the corresponding row in the right image $I_r$, shifting it by a disparity distance $d$. We restrict $d$ to a specific search range $[d_{min}, d_{max}]$.
+    \item Calculate a similarity score $c(d)$ between the two windows at each step. Common metrics include \textbf{SSD} (Sum of Squared Differences) or \textbf{NCC} (Normalized Cross-Correlation).
+    \item The true disparity $\overline{d}$ is the shift that yields the best similarity score (e.g., the minimum difference for SSD).
+\end{enumerate}
+
+\textbf{Numerical Example: Sum of Squared Differences (SSD)}\\
+Let's look at a 1D example. We have a small window of 3 pixels in the left image: $[4, 8, 5]$. We are searching along a row in the right image: $[1, 4, 8, 5, 2]$.
+\begin{itemize}
+    \item \textbf{Test $d = 0$ (shift by 0):} Compare $[4, 8, 5]$ with $[1, 4, 8]$.\\
+    $\text{SSD} = (4-1)^2 + (8-4)^2 + (5-8)^2 = 9 + 16 + 9 = 34$
+    \item \textbf{Test $d = 1$ (shift by 1):} Compare $[4, 8, 5]$ with $[4, 8, 5]$.\\
+    $\text{SSD} = (4-4)^2 + (8-8)^2 + (5-5)^2 = 0 + 0 + 0 = 0$
+\end{itemize}
+Since we want the \textit{minimum} difference, $d=1$ is our winner. The disparity is 1 pixel.
+
+\section*{4. Left-Right Consistency and Occlusions}
+Correspondences are made more difficult by \textbf{occlusions} (points in the 3D world that are visible to one camera but hidden behind an object from the perspective of the other camera). A point with no counterpart will break the matching algorithm.
+
+To solve this, we enforce \textbf{Left-Right Consistency}:
+\begin{enumerate}
+    \item Compute a disparity map from the left image to the right image ($D_{lr}$).
+    \item Compute a second disparity map from the right image to the left image ($D_{rl}$).
+    \item A match is considered valid if the left-to-right disparity is equal and opposite to the right-to-left disparity:
+    \begin{equation}
+        D(i,j) = d \iff D_{lr}(i,j) = -D_{rl}(i, j+d) = d
+    \end{equation}
+\end{enumerate}
+If they disagree, we mark that pixel as an occlusion.
 
 \end{document}
