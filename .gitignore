@@ -78,6 +78,9 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# bash.exe.stackdump
+
+
 # IPython
 profile_default/
 ipython_config.py
