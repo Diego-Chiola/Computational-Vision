@@ -1,0 +1,12 @@
+Custom Video Source
+===================
+
+Title   : Busy Zebra Crossing in Hong Kong
+Platform: Pexels (royalty-free, no attribution required)
+URL     : https://www.pexels.com/video/busy-zebra-crossing-in-hong-kong-29093578/
+
+Usage
+-----
+Only the first 3 seconds of the video were used (file: custom_1080_1920_30fps_first_3s.mp4).
+Frames were extracted at 30 fps, yielding 92 frames (frame0001.jpg – frame0092.jpg).
+Resolution: 1080 x 1920 px (portrait orientation).
