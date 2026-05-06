@@ -78,7 +78,16 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# bash.exe.stackdump
+# bash crash dumps
+*bash.exe.stackdump
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# all costum folder nopt to push 
+homeworks/midterm/video/custom/*
+
+
 
 
 # IPython
