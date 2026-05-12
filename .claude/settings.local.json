@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python *)",
+      "PowerShell(python \"C:\\\\Users\\\\gabri\\\\OneDrive\\\\Desktop\\\\Uni\\\\Master\\\\Bombo\\\\Computational-Vision\\\\homeworks\\\\midterm\\\\_patch_notebook.py\")",
+      "PowerShell(Remove-Item *)"
+    ]
+  }
+}
