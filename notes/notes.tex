@@ -1226,34 +1226,45 @@ While the formula is simple, making a computer execute it is difficult. Stereo v
 
 
 
-\section*{Introduction}
-To calculate depth using stereo vision, we must first determine the disparity ($d = x_l - x_r$). The \textbf{Correspondence Problem} is the challenge of figuring out which pixel in the right image corresponds to a specific pixel in the left image. To solve it, we must decide which image elements to match and which similarity measure to use.
+\section{Correspondence Problem}
+To calculate depth using stereo vision, we must first determine the disparity ($d = x_l - x_r$). The \textbf{Correspondence Problem} is
+the challenge of figuring out which pixel in the right image corresponds to a specific pixel in the left image. To solve it, we must decide
+which image elements to match and which similarity measure to use.
 
-\section*{1. Sparse vs. Dense Correspondences}
+\subsection{Sparse vs. Dense Correspondences}
 We can approach matching in two ways:
 \begin{itemize}
-    \item \textbf{Sparse Correspondences:} We only try to match highly distinct features, like corners or sharp edges. This is faster but only provides depth for a few specific points.
-    \item \textbf{Dense Correspondences:} We attempt to find a match for \textit{every single pixel} in the image to create a full ``disparity map''. In a standard color-coded disparity map, bright areas represent high disparities (objects closer to the camera), and dark areas represent low disparities (objects farther away).
+    \item \textbf{Sparse Correspondences:} We only try to match highly distinct features, like corners or sharp edges. This is faster but only
+     provides depth for a few specific points.
+    \item \textbf{Dense Correspondences:} We attempt to find a match for \textit{every single pixel} in the image to create a full ``disparity map''.
+    In a standard color-coded disparity map, bright areas represent high disparities (objects closer to the camera), and dark areas represent low
+    disparities (objects farther away).
 \end{itemize}
 
-\section*{2. Image Rectification}
-Searching an entire 2D image for a matching pixel is computationally massive. To simplify this, we mathematically warp the stereo pair of images in a process called \textbf{Rectification}. Rectification perfectly aligns the two cameras virtually so that their image planes are coplanar.
+\subsection{Image Rectification}
+Searching an entire 2D image for a matching pixel is computationally massive. To simplify this, we mathematically warp the stereo pair of images in
+a process called \textbf{Rectification}. Rectification perfectly aligns the two cameras virtually so that their image planes are coplanar.
 
-Because of this geometry, a point on row $y$ in the left image will \textit{always} lie on the exact same row $y$ in the right image (conjugate points lie on corresponding scanlines). Instead of searching a whole 2D image, we only have to search a single 1D horizontal line!
+Because of this geometry, a point on row $y$ in the left image will \textit{always} lie on the exact same row $y$ in the right image (conjugate
+points lie on corresponding scanlines). Instead of searching a whole 2D image, we only have to search a single 1D horizontal line!
 
-\section*{3. The Block Matching Algorithm (Dense Correspondences)}
-To find matches, we cannot simply compare single pixels, as many pixels share the same color/intensity. Instead, we use correlation methods applied to small image patches (a neighborhood or window of pixels).
+\subsection{The Block Matching Algorithm (Dense Correspondences)}
+To find matches, we cannot simply compare single pixels, as many pixels share the same color/intensity. Instead, we use correlation methods
+applied to small image patches (a neighborhood or window of pixels).
 
 \textbf{Algorithm Sketch:}
 \begin{enumerate}
     \item Take a small window $W$ (e.g., a $5 \times 5$ pixel box) centered on a pixel at coordinates $(i,j)$ in the left image $I_l$.
-    \item Slide an identical window along the corresponding row in the right image $I_r$, shifting it by a disparity distance $d$. We restrict $d$ to a specific search range $[d_{min}, d_{max}]$.
-    \item Calculate a similarity score $c(d)$ between the two windows at each step. Common metrics include \textbf{SSD} (Sum of Squared Differences) or \textbf{NCC} (Normalized Cross-Correlation).
+    \item Slide an identical window along the corresponding row in the right image $I_r$, shifting it by a disparity distance $d$. We restrict $d$
+     to a specific search range $[d_{min}, d_{max}]$.
+    \item Calculate a similarity score $c(d)$ between the two windows at each step. Common metrics include \textbf{SSD} (Sum of Squared Differences)
+     or \textbf{NCC} (Normalized Cross-Correlation).
     \item The true disparity $\overline{d}$ is the shift that yields the best similarity score (e.g., the minimum difference for SSD).
 \end{enumerate}
 
 \textbf{Numerical Example: Sum of Squared Differences (SSD)}\\
-Let's look at a 1D example. We have a small window of 3 pixels in the left image: $[4, 8, 5]$. We are searching along a row in the right image: $[1, 4, 8, 5, 2]$.
+Let's look at a 1D example. We have a small window of 3 pixels in the left image: $[4, 8, 5]$. We are searching along a row in the right image:
+ $[1, 4, 8, 5, 2]$.
 \begin{itemize}
     \item \textbf{Test $d = 0$ (shift by 0):} Compare $[4, 8, 5]$ with $[1, 4, 8]$.\\
     $\text{SSD} = (4-1)^2 + (8-4)^2 + (5-8)^2 = 9 + 16 + 9 = 34$
@@ -1262,8 +1273,9 @@ Let's look at a 1D example. We have a small window of 3 pixels in the left image
 \end{itemize}
 Since we want the \textit{minimum} difference, $d=1$ is our winner. The disparity is 1 pixel.
 
-\section*{4. Left-Right Consistency and Occlusions}
-Correspondences are made more difficult by \textbf{occlusions} (points in the 3D world that are visible to one camera but hidden behind an object from the perspective of the other camera). A point with no counterpart will break the matching algorithm.
+\subsection{Left-Right Consistency and Occlusions}
+Correspondences are made more difficult by \textbf{occlusions} (points in the 3D world that are visible to one camera but hidden behind an object
+ from the perspective of the other camera). A point with no counterpart will break the matching algorithm.
 
 To solve this, we enforce \textbf{Left-Right Consistency}:
 \begin{enumerate}
