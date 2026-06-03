@@ -1,8 +1,42 @@
-\documentclass{article}
+% ---------- Packages (add any you don't already have) ----------
+\documentclass{report}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{booktabs,array,multirow}
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \geometry{a4paper, margin=1in}
-\usepackage{amsmath}
+
+% ---------- Colors ----------
+\definecolor{accent}{RGB}{233,86,86}
+\definecolor{accentdark}{RGB}{150,40,40}
+\definecolor{boxbg}{RGB}{253,242,242}
+\definecolor{defbg}{RGB}{238,244,255}
+\definecolor{defrule}{RGB}{70,110,200}
+\definecolor{exbg}{RGB}{240,248,240}
+\definecolor{exrule}{RGB}{70,150,70}
+
+% ---------- Custom boxes ----------
+\newtcolorbox{keybox}{
+  colback=boxbg, colframe=accent, boxrule=0.8pt, arc=2pt,
+  left=8pt,right=8pt,top=6pt,bottom=6pt,
+  fonttitle=\bfseries, title=Key idea}
+\newtcolorbox{defbox}[1]{
+    colback=defbg, colframe=defrule, boxrule=0.8pt, arc=2pt,
+    left=8pt,right=8pt,top=6pt,bottom=6pt,
+    fonttitle=\bfseries, title={#1}}
+\newtcolorbox{exbox}[1]{
+    colback=exbg, colframe=exrule, boxrule=0.8pt, arc=2pt,
+    left=8pt,right=8pt,top=6pt,bottom=6pt,
+    fonttitle=\bfseries, title={Numeric example: #1}}
+
+% ---------- Handy macros ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\xvec}{\mathbf{x}}
+\newcommand{\Xmat}{X_n}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\IoU}{IoU}
 
 \title{Computational Vision}
 \author{Diego Chiola}
@@ -11,9 +45,9 @@
 \begin{document}
 \maketitle
 
-\section{Pixel Basics, Image Types, and Color}
+\chapter{Pixel Basics, Image Types, and Color}
 
-\subsection{Image Types and Pixel Contents}
+\chapter{Image Types and Pixel Contents}
 When we think of digital images, we usually think of standard photographs. However, in computational vision, the value stored inside a pixel depends entirely on what kind of sensor captured the image:
 \begin{itemize}
     \item \textbf{Pictorial Digital Images (Photos):} These capture light intensity (yielding black-and-white images) or color.
@@ -22,7 +56,7 @@ When we think of digital images, we usually think of standard photographs. Howev
     \item \textbf{Thermal Images:} Pixels capture heat signatures, allowing vision in complete darkness.
 \end{itemize}
 
-\subsection{Dynamic Range and Quantization}
+\chapter{Dynamic Range and Quantization}
 The \textbf{dynamic range} of an image refers to the total number of distinctive values that can possibly occur in the image. Think of this as the "palette" of available shades.
 
 This range is limited by two things: the physical capabilities of the camera sensor and the number of bits (data) we choose to assign to each pixel, a process called quantization.
@@ -31,12 +65,12 @@ This range is limited by two things: the physical capabilities of the camera sen
     \item \textbf{8-bit depth (Gray Level):} This is the standard for grayscale images. We associate 1 byte (which is 8 bits) to each pixel.
 \end{itemize}
 
-\paragraph{Numerical Example:}
+\subsection{Numerical Example:}
 Because computers run on binary, an 8-bit depth means we have $2^8$ possible combinations.
 \[ 2^8 = 256 \text{ gray levels.} \]
 This means a pixel can hold any integer value from $0$ (pure black) to $255$ (pure white). A value of $128$ would be a perfect mid-tone gray.
 
-\subsection{Color Image Processing}
+\chapter{Color Image Processing}
 To capture color, cameras use three different physical filters (sensitive to Red, Green, and Blue light) to acquire three separate monochrome images. These three layers are then stacked together to form a single RGB image.
 
 \begin{itemize}
@@ -44,7 +78,7 @@ To capture color, cameras use three different physical filters (sensitive to Red
     \item Because each of the three channels gets its own 8-bit byte (256 possible values), a single color pixel requires 3 bytes of memory.
 \end{itemize}
 
-\paragraph{Numerical Example:}
+\subsection{Numerical Example:}
 Let's look at the math behind "millions of colors". If Red, Green, and Blue each have 256 possible levels, the total number of color combinations is:
 \[ 256 \times 256 \times 256 = 16,777,216 \text{ possible colors.} \]
 For instance, a pixel with the triplet $(255, 0, 0)$ is telling the monitor to display maximum Red, zero Green, and zero Blue. A triplet of $(255, 255, 255)$ mixes all light to create pure white.
@@ -58,9 +92,9 @@ When processing these images algorithmically, engineers typically face a choice:
 
 
 
-\section{Global Descriptors and Image Segmentation}
+\chapter{Global Descriptors and Image Segmentation}
 
-\subsection{The Goal: Image Segmentation}
+\section{The Goal: Image Segmentation}
 One of the most fundamental tasks in computational vision is \textbf{image segmentation}. This means dividing an image into meaningful parts, essentially detecting groups of pixels that are physically close together and visually similar.
 
 We can evaluate "similarity" based on various attributes, such as:
@@ -72,7 +106,7 @@ We can evaluate "similarity" based on various attributes, such as:
 
 The simplest example is separating a foreground object (like the cameraman in the slides) from the background.
 
-\subsection{Brightness Histograms and Binarization}
+\section{Brightness Histograms and Binarization}
 To figure out which pixels belong to the foreground and which belong to the background, we use a \textbf{brightness histogram}.
 \begin{itemize}
     \item \textbf{What is it?} A histogram is a graph where the x-axis represents the possible pixel values (0 to 255 for an 8-bit image) and the y-axis represents the number of pixels in the image that have that exact value.
@@ -80,7 +114,7 @@ To figure out which pixels belong to the foreground and which belong to the back
 
 If an image has a dark background and a bright subject, the histogram will typically show two distinct "peaks" (a bimodal histogram). We can achieve segmentation through \textbf{binarization}. This involves picking a threshold value directly between those two peaks.
 
-\paragraph{Numerical Example:}
+\subsubsection{Numerical Example:}
 Imagine an image where the background pixels mostly have values around 30 (dark gray) and the object pixels are around 200 (light gray).
 We can set a threshold at $T = 100$.
 The algorithm looks at every pixel $I(x,y)$:
@@ -90,7 +124,7 @@ The algorithm looks at every pixel $I(x,y)$:
 \end{itemize}
 The result is a clean binary image (a silhouette).
 
-\subsection{The Challenge of Contrast}
+\section{The Challenge of Contrast}
 The slides point out a critical reality: finding that perfect threshold is rarely easy! The shape of the histogram tells us a lot about the image quality:
 \begin{itemize}
     \item \textbf{Dark image:} All pixels are bunched up on the left side (near 0).
@@ -99,21 +133,21 @@ The slides point out a critical reality: finding that perfect threshold is rarel
     \item \textbf{High-contrast image:} The pixels are spread widely across the entire 0-255 range. This is ideal for thresholding.
 \end{itemize}
 
-\subsection{Dealing with Color}
+\section{Dealing with Color}
 When we move to color images, segmentation gets trickier. The slides note that in color, values being numerically "close" in raw RGB code doesn't always mean they look visually "similar" to human eyes.
 
 For example, a pixel in shadow might have entirely different RGB numbers than a sunlit pixel of the exact same object. Because of this, a careful choice of the \textbf{color space} (like moving from RGB to HSV - Hue, Saturation, Value) is highly recommended before trying to segment.
 
-\subsection{Image Quantization}
+\section{Image Quantization}
 Another technique mentioned is \textbf{Image Quantization}, which is the deliberate reduction of the image's dynamic range. Instead of having 256 shades of gray, we might force the image to only use 4 or 8 shades. This simplifies the image drastically, washing out minor noise and making it a very useful pre-processing step before attempting segmentation.
 
-\paragraph{Numerical Example:}
+\subsubsection{Numerical Example:}
 Let's say we want to reduce 256 levels down to just 4 levels. We divide the range into 4 "buckets" of 64 values each.
 For a pixel with an original value of $150$:
 \[ New\_Value = \left\lfloor \frac{150}{64} \right\rfloor = 2 \]
 We map it to bucket "2", completely erasing the subtle differences between value 150 and value 160 (they both go into the same bucket).
 
-\subsection{Summary of Global Descriptors (Histograms)}
+\section{Summary of Global Descriptors (Histograms)}
 Histograms are used to obtain an overall description of the image content.
 \begin{itemize}
     \item \textbf{The Good:} They are very easy to compute and highly robust to geometrical variations. If you take a picture of an apple and rotate the photo 90 degrees, the histogram remains exactly the same.
@@ -129,9 +163,9 @@ Histograms are used to obtain an overall description of the image content.
 
 
 
-\section{Linear Filters and Local Features}
+\chapter{Linear Filters and Local Features}
 
-\subsection{Linear Filtering and Convolution}
+\section{Linear Filtering and Convolution}
 A basic tool in image processing is the linear filter, used for noise reduction and signal enhancement. Filtering is achieved through a mathematical operation called \textbf{convolution}.
 
 In convolution, a small matrix called a \textbf{kernel} ($k$) is swept across the image signal ($f$) to produce a new filtered image ($g$):
@@ -140,14 +174,14 @@ In convolution, a small matrix called a \textbf{kernel} ($k$) is swept across th
 For a 2D image, the math is the sum of the element-wise products between the kernel and the image patch it currently covers:
 \[ g[x,y] = \sum_{m,l} f[x-m, y-l] k[m,l] \]
 
-\paragraph{Numerical Example:}
+\subsubsection{Numerical Example:}
 Imagine a 1D row of pixels transitioning from dark to light: $f = [10, 10, 10, 50, 50, 50]$.
 We want to find the edge using a simple edge-detection kernel: $k = [-1, 0, 1]$.
 Let's center the kernel over the third pixel (value 10):
 \[ g[3] = (10 \times -1) + (10 \times 0) + (50 \times 1) = -10 + 0 + 50 = 40 \]
 The high output value ($40$) indicates that a sharp transition (an edge) was detected at this location.
 
-\subsection{Image Gradients and Edges}
+\section{Image Gradients and Edges}
 \textbf{Edges} are pixels at which the image values undergo a sharp variation. To find them, we compute the \textbf{Image Gradient}, a vector that points in the direction of the most rapid change in intensity.
 
 The gradient is composed of partial derivatives in the $x$ and $y$ directions:
@@ -159,7 +193,7 @@ From this, we extract two crucial pieces of geometric information:
     \item \textbf{Gradient Orientation} (Edge direction): $\theta(x,y) = \arctan\left(\frac{g_y}{g_x}\right)$
 \end{itemize}
 
-\subsection{Image Gradient: Numerical Example}
+\section{Image Gradient: Numerical Example}
 
 To calculate the gradient at a specific pixel, we estimate the partial derivatives using the \textbf{central difference} of its immediate neighbors.
 
@@ -167,7 +201,7 @@ Imagine a $3 \times 3$ patch of grayscale image pixels, where we want to find th
 
 \[ \text{Patch} = \begin{bmatrix} 10 & 10 & 10 \\ 10 & \textbf{50} & 90 \\ 10 & 90 & 170 \end{bmatrix} \]
 
-\subsubsection{Calculate Partial Derivatives}
+\subsection{Calculate Partial Derivatives}
 We find the rate of change in the horizontal ($x$) and vertical ($y$) directions. \textit{(Note: In standard image coordinates, the y-axis increases downwards).}
 
 \begin{itemize}
@@ -178,19 +212,19 @@ We find the rate of change in the horizontal ($x$) and vertical ($y$) directions
           \[ g_y = f(x, y+1) - f(x, y-1) = 90 - 10 = 80 \]
 \end{itemize}
 
-\subsubsection{Calculate Gradient Magnitude}
+\subsection{Calculate Gradient Magnitude}
 The magnitude measures the \textbf{strength} of the edge.
 \[ M(x,y) = \sqrt{g_x^2 + g_y^2} \]
 \[ M = \sqrt{80^2 + 80^2} = \sqrt{6400 + 6400} = \sqrt{12800} \approx 113.1 \]
 
-\subsubsection{Calculate Gradient Orientation}
+\subsection{Calculate Gradient Orientation}
 The orientation measures the \textbf{direction} of the most rapid increase in intensity.
 \[ \theta(x,y) = \arctan\left(\frac{g_y}{g_x}\right) \]
 \[ \theta = \arctan\left(\frac{80}{80}\right) = \arctan(1) = 45^\circ \]
 
 \textbf{Conclusion:} The gradient vector points at a $45^\circ$ angle (down and to the right). The gradient always points in the direction of steepest ascent (from dark to bright).
 
-\subsection{The Effect of Noise and Gaussian Smoothing}
+\section{The Effect of Noise and Gaussian Smoothing}
 Calculating derivatives is highly sensitive to noise. Taking the derivative of a noisy signal results in massive spikes that hide the true edges.
 
 \textbf{The Solution:} We must smooth the image before taking the derivative. We typically use a \textbf{Gaussian Filter}, which acts as a low-pass filter to blur out random noise.
@@ -200,10 +234,10 @@ Calculating derivatives is highly sensitive to noise. Taking the derivative of a
 \[ \frac{\partial}{\partial x}(h * f) = \left(\frac{\partial}{\partial x}h\right) * f \]
 This saves computational power by allowing us to use a single "Derivative of Gaussian" filter. This logic forms the foundation of the famous \textbf{Canny Edge Detector}.
 
-\subsection{Local Features: Corners}
+\section{Local Features: Corners}
 While edges are useful, they suffer from the aperture problem (you cannot tell where along an edge you are). \textbf{Corners} are patches with strong gradients in at least \textit{two} significantly different orientations, making them stable and "good features to match" across different images.
 
-\subsubsection{The Autocorrelation Function}
+\subsection{The Autocorrelation Function}
 To detect corners, we analyze how a local patch of pixels changes when shifted by a small vector $u$. We use the Summed Square Difference (SSD), also known as the autocorrelation function $E_{AC}(u)$:
 
 \[ E_{AC}(u) = \sum_{i}[I(x_{i}+u)-I(x_{i})]^{2} \]
@@ -214,7 +248,7 @@ To make this computationally feasible, we approximate the shifted image using a 
 Substituting this back into the SSD equation cancels out the $I(x_i)$ terms, yielding a quadratic form:
 \[ E_{AC}(u) \approx \sum_{i}[\nabla I(x_{i})\cdot u]^{2} = u^{\top}Au \]
 
-\subsubsection{The Autocorrelation Matrix ($A$)}
+\subsection{The Autocorrelation Matrix ($A$)}
 The matrix $A$ captures the gradient distribution within the patch:
 \[ A = \begin{bmatrix} \sum I_x^2 & \sum I_x I_y \\ \sum I_x I_y & \sum I_y^2 \end{bmatrix} \]
 
@@ -225,7 +259,7 @@ By calculating the eigenvalues ($\lambda_1, \lambda_2$) of $A$, we can classify 
     \item \textbf{Flat Region:} Both $\lambda_1$ and $\lambda_2$ are small.
 \end{itemize}
 
-\subsubsection{Corner Numerical Example}
+\subsection{Corner Numerical Example}
 Consider a $4 \times 4$ image grid containing a dark square (intensity 10) on a light background (intensity 100). We will compute the Autocorrelation Matrix for the inner $2 \times 2$ patch.
 
 \[ \text{Image} = \begin{bmatrix} 100 & 100 & 100 & 100 \\ 100 & \textbf{10} & \textbf{10} & 100 \\ 100 & \textbf{10} & \textbf{10} & 100 \\ 100 & 100 & 100 & 100 \end{bmatrix} \]
@@ -261,11 +295,11 @@ Because $A$ is a diagonal matrix, its eigenvalues are simply the diagonal entrie
 
 
 
-\section{Image Segmentation}
+\chapter{Image Segmentation}
 Image segmentation is a fundamental task in computational vision that involves partitioning a digital image into multiple segments (sets of pixels, also known as image objects).
 The goal of segmentation is to simplify and/or change the representation of an image into something that is more meaningful and easier to analyze.
 
-\subsection{Core Concept: Uniformity}
+\section{Core Concept: Uniformity}
 Segmentation typically divides an image into regions that are uniform according to a specific quality or feature:
 \begin{itemize}
     \item \textbf{Brightness/Intensity:} Common light levels.
@@ -273,7 +307,7 @@ Segmentation typically divides an image into regions that are uniform according 
     \item \textbf{Motion:} Pixels moving with the same velocity/direction.
 \end{itemize}
 
-\subsection{Mathematical Definition}
+\section{Mathematical Definition}
 Let $R$ represent the entire spatial region occupied by an image. Image segmentation is the process of partitioning $R$ into $n$ subregions $R_1, R_2, \dots, R_n$ such that:
 
 \begin{enumerate}
@@ -284,48 +318,48 @@ Let $R$ represent the entire spatial region occupied by an image. Image segmenta
     \item \textbf{Maximality:} $Q(R_i \cup R_j) = \text{FALSE}$ for any adjacent regions $R_i$ and $R_j$. Neighboring regions must be different according to the predicate $Q$.
 \end{enumerate}
 
-\subsection{Methods Overview}
+\section{Methods Overview}
 Segmentation methods can be broadly categorized based on the level of guidance and the visual cues used.
 
-\subsubsection{Supervision Levels}
+\subsection{Supervision Levels}
 \begin{itemize}
     \item \textbf{Unsupervised:} Segmentation is based purely on pixel and appearance information (low-level features).
     \item \textbf{Supervised:} Segmentation is guided by semantic concepts or prior knowledge of specific object classes.
 \end{itemize}
 
-\subsubsection{Technical Approaches}
+\subsection{Technical Approaches}
 \begin{itemize}
     \item \textbf{Edge-based methods:} Look for discontinuities (edges) in the image to find boundaries between regions.
     \item \textbf{Region-based methods:} Look for regions of similarity according to specific criteria. This is generally considered a more robust formulation.
 \end{itemize}
 
-\section{Thresholding and Motion Segmentation}
+\chapter{Thresholding and Motion Segmentation}
 
 This chapter focuses on \textbf{Thresholding}, a region-based segmentation method that groups pixels sharing similar intensity levels.
 
-\subsection{Basic Thresholding Concepts}
+\section{Basic Thresholding Concepts}
 The simplest form of segmentation is the binary case, where we separate an image into two classes: Foreground and Background. This is achieved by comparing each pixel intensity $f(x,y)$ to a global threshold $T$.
 
-\subsubsection{Global Binary Thresholding}
+\subsection{Global Binary Thresholding}
 The resulting image $g(x,y)$ is defined as:
 \begin{equation}
     g(x,y) = \begin{cases} 1 & \text{if } f(x,y) > T \\ 0 & \text{otherwise} \end{cases}
 \end{equation}
 Where 1 typically represents the foreground and 0 the background.
 
-\subsubsection{Multiple Thresholding}
+\subsection{Multiple Thresholding}
 When an image contains multiple objects with distinct intensity ranges, a single threshold is insufficient. Multiple thresholds ($T_1, T_2, \dots$) can be used:
 \begin{equation}
     g(x,y) = \begin{cases} a & \text{if } f(x,y) > T_2 \\ b & \text{if } T_1 < f(x,y) \le T_2 \\ c & \text{otherwise} \end{cases}
 \end{equation}
 
-\subsection{Motion Segmentation}
+\section{Motion Segmentation}
 Motion segmentation is a practical application of thresholding where the "uniformity" criterion is motion rather than static intensity. By identifying pixels that change significantly between frames, we can extract moving objects from a static background. This is a binary segmentation task (Moving vs. Not Moving).
 
-\subsection{Automatic Global Threshold Selection}
+\section{Automatic Global Threshold Selection}
 Instead of manually picking $T$, we can use an iterative algorithm to find the optimal value, typically located in the "valley" of a bimodal histogram.
 
-\subsubsection{The Iterative Algorithm}
+\subsection{The Iterative Algorithm}
 \begin{enumerate}
     \item \textbf{Initial Estimate:} Select an initial $T$ (often the global mean intensity of the image).
     \item \textbf{Segmentation:} Partition the image into two groups: $G_1$ (pixels $> T$) and $G_2$ (pixels $\le T$).
@@ -334,7 +368,7 @@ Instead of manually picking $T$, we can use an iterative algorithm to find the o
     \item \textbf{Iteration:} Repeat steps 2 through 4 until $T$ stabilizes (the change is smaller than a predefined epsilon).
 \end{enumerate}
 
-\subsubsection{Numerical Example}
+\subsection{Numerical Example}
 Suppose we have a set of 16 pixel intensities:
 \[ \{10, 12, 15, 20, 22, 25, 100, 110, 120, 130, 140, 150, 160, 170, 180, 200\} \]
 
@@ -355,11 +389,11 @@ Suppose we have a set of 16 pixel intensities:
 \end{itemize}
 The algorithm continues until the threshold value converges, effectively separating the dark cluster from the light cluster.
 
-\section{Otsu's Method for Global Thresholding}
+\chapter{Otsu's Method for Global Thresholding}
 
 While iterative methods rely on heuristic averaging, Otsu's method is grounded in statistical discriminant analysis. Its objective is to segment foreground and background by maximizing the \textbf{between-class variance}. Computations are performed on the normalized image histogram.
 
-\subsection{Mathematical Formulation}
+\section{Mathematical Formulation}
 Let the image have intensity levels from $0$ to $L-1$. The normalized histogram gives the probability $p_i$ of each intensity level $i$.
 
 We define a threshold $k$ ($0 < k < L-1$) that divides pixels into two classes:
@@ -382,7 +416,7 @@ The mean intensities of the classes are:
 
 The global mean of the entire image is $m_G = \sum_{i=0}^{L-1} i p_i$.
 
-\subsection{Optimization Criterion}
+\section{Optimization Criterion}
 Otsu's method finds the optimal threshold $k^*$ that maximizes the between-class variance $\sigma_B^2(k)$:
 \begin{equation}
     k^* = \arg\max_{0 \le k \le L-1} \sigma_B^2(k)
@@ -392,7 +426,7 @@ Where the between-class variance is defined as:
     \sigma_B^2(k) = P_1(k)(m_1(k) - m_G)^2 + P_2(k)(m_2(k) - m_G)^2
 \end{equation}
 
-\subsection{Numerical Example}
+\section{Numerical Example}
 Consider a 10-pixel image with 4 intensity levels ($L=4$).
 Pixel values: $\{0, 0, 0, 1, 1, 2, 3, 3, 3, 3\}$.
 
@@ -407,14 +441,14 @@ We evaluate the variance for potential thresholds $k$:
 \end{itemize}
 The maximum variance is $1.44$ at $k=1$. Therefore, the optimal threshold is $T=1$.
 
-\section{Improving Thresholding}
+\chapter{Improving Thresholding}
 
 Global thresholding can fail if the image is noisy or if lighting is uneven.
 
-\subsection{Image Smoothing}
+\section{Image Smoothing}
 Noisy images produce jagged histograms where it is difficult to find a clear valley. Applying Gaussian smoothing prior to thresholding smooths the histogram, making global thresholding algorithms (like Otsu's) significantly more effective.
 
-\subsection{Variable (Local) Thresholding}
+\section{Variable (Local) Thresholding}
 When an image has uneven illumination (e.g., shadows across a document), a single global threshold will fail. Variable thresholding solves this by subdividing the image or computing a unique threshold $T_{xy}$ for every pixel based on its local neighborhood.
 
 A common approach computes the threshold based on local mean ($m_{xy}$) and standard deviation ($\sigma_{xy}$):
@@ -425,14 +459,14 @@ A common approach computes the threshold based on local mean ($m_{xy}$) and stan
 For text segmentation, a \textbf{moving average} approach is highly effective. It calculates the threshold $T_{xy} = b m_{xy}$ where $m$ is estimated using only the last $n$ visited pixels along a scan line.
 
 
-\section{Color Segmentation and K-Means Clustering}
+\chapter{Color Segmentation and K-Means Clustering}
 
 When moving from grayscale to color images, the feature space expands to multiple dimensions (e.g., 3D spaces like RGB or HSV). For generic color segmentation where no prior target color is specified, clustering methods like K-means are highly effective.
 
-\subsection{K-Means Clustering: The Concept}
+\section{K-Means Clustering: The Concept}
 K-means is an unsupervised clustering algorithm. In the context of image segmentation, it plots every pixel as a point in a multidimensional color space and attempts to group these points into $K$ distinct clusters based on their proximity (color similarity).
 
-\subsection{The Mathematical Objective}
+\section{The Mathematical Objective}
 Given a set of image pixels $(x_1, \dots, x_n)$, the goal is to partition the data into $K$ sets, $S = (S_1, \dots, S_K)$, to minimize the within-cluster variance. The objective function is:
 \begin{equation}
     \arg\min_{S} \sum_{i=1}^{K} \sum_{x \in S_i} ||x - \mu_i||^2
@@ -444,7 +478,7 @@ Where:
     \item $\mu_i$ is the centroid (mean vector) of cluster $S_i$.
 \end{itemize}
 
-\subsection{The Iterative Algorithm}
+\section{The Iterative Algorithm}
 K-means minimizes the objective function through the following iterative steps:
 \begin{enumerate}
     \item \textbf{Random Initialization:} Select $K$ random points in the feature space to serve as the initial centroids.
@@ -453,7 +487,7 @@ K-means minimizes the objective function through the following iterative steps:
     \item \textbf{Convergence Check:} Repeat Steps 2 and 3 until stability is reached (i.e., pixel assignments no longer change or centroid movement falls below a threshold).
 \end{enumerate}
 
-\subsection{Numerical Example: RGB Clustering}
+\section{Numerical Example: RGB Clustering}
 Consider an image with 6 pixels and $K=2$ clusters.
 
 \textbf{1. Data Points (RGB):}
@@ -481,28 +515,28 @@ Calculate new centroids by taking the mean of assigned pixels:
 \end{itemize}
 The centroids have moved closer to the center of their respective color clouds. The process repeats until assignments no longer change.
 
-\subsection{Extended Feature Space: RGBXY}
+\section{Extended Feature Space: RGBXY}
 Standard K-means on RGB values groups pixels strictly by color, ignoring their physical location in the image. A red pixel in the top-left corner and a red pixel in the bottom-right corner will be placed in the same cluster. To encourage spatially contiguous segments, the feature space can be expanded to 5 dimensions: \textbf{RGBXY}. This forces the algorithm to consider both color similarity and spatial proximity when calculating the distance.
 
-\subsection{Pros, Cons, and the Choice of K}
+\section{Pros, Cons, and the Choice of K}
 \begin{itemize}
     \item \textbf{Pros:} The algorithm is simple to implement, understand, and computationally relatively fast.
     \item \textbf{Cons:} Results can be non-deterministic due to the random initialization of centroids. Furthermore, it does not inherently prevent the formation of highly unbalanced clusters.
     \item \textbf{Choosing K:} The number of clusters $K$ must be set a priori. A common solution to finding the optimal $K$ is to run the algorithm across multiple values of $K$ (e.g., $K=2, 3, 4, 5$) and evaluate the results using a cluster quality metric, such as the \textbf{Davies-Bouldin index}, to find the partition that yields the most distinct and cohesive clusters.
 \end{itemize}
 
-\section{Superpixels and the SLIC Algorithm}
+\chapter{Superpixels and the SLIC Algorithm}
 
 Superpixels provide a convenient primitive from which to compute local image features. They group pixels into compact, roughly uniform regions that respect object boundaries, capturing redundancy in the image and drastically reducing the complexity of subsequent computer vision tasks.
 
-\subsection{SLIC: Simple Linear Iterative Clustering}
+\section{SLIC: Simple Linear Iterative Clustering}
 SLIC is an adaptation of the K-means algorithm designed specifically for generating superpixels. It performs a local clustering of pixels in a 5-dimensional space defined by $[l, a, b, x, y]$.
 \begin{itemize}
     \item $l, a, b$: The pixel color vector in the CIELAB color space, chosen for its perceptual uniformity.
     \item $x, y$: The spatial position of the pixel in the image.
 \end{itemize}
 
-\subsection{The Distance Metric ($D_s$)}
+\section{The Distance Metric ($D_s$)}
 Because CIELAB color distances and spatial plane distances have different scales, they cannot be directly combined using a simple Euclidean norm. SLIC introduces a specialized distance measure $D_s$ that normalizes the spatial distance.
 
 Given a cluster center $C_k = [l_k, a_k, b_k, x_k, y_k]^T$ and a pixel $i$ at $[l_i, a_i, b_i, x_i, y_i]^T$, the distances are computed as follows:
@@ -519,10 +553,10 @@ Given a cluster center $C_k = [l_k, a_k, b_k, x_k, y_k]^T$ and a pixel $i$ at $[
     \item $m$: The compactness parameter. A higher $m$ emphasizes spatial proximity, resulting in more compact, rigidly square superpixels.
 \end{itemize}
 
-\subsection{Algorithm Complexity ($O(N)$)}
+\section{Algorithm Complexity ($O(N)$)}
 Standard K-means evaluates distances from every pixel to every cluster center, resulting in $O(NKI)$ complexity. SLIC drastically reduces this by localizing the search. Since a superpixel occupies roughly $S^2$ area, SLIC restricts the pixel search to a $2S \times 2S$ region surrounding the cluster center. Consequently, a pixel is evaluated against no more than eight centers, granting the algorithm a strictly linear $O(N)$ complexity, regardless of $K$.
 
-\subsection{Algorithm Steps}
+\section{Algorithm Steps}
 \begin{enumerate}
     \item \textbf{Initialization:} Sample $K$ cluster centers at regular grid intervals $S$. Initialize distance $d(i) = \infty$ and label $l(i) = -1$ for all pixels.
     \item \textbf{Perturbation:} Move centers to the lowest gradient position in a $3 \times 3$ neighborhood to avoid noisy edges.
@@ -532,7 +566,7 @@ Standard K-means evaluates distances from every pixel to every cluster center, r
     \item \textbf{Connectivity:} Enforce spatial connectivity by merging small, stray, or disjoint segments with the largest neighboring cluster.
 \end{enumerate}
 
-\subsection{Numerical Example: Label Assignment}
+\section{Numerical Example: Label Assignment}
 Suppose an image has $N = 100$ pixels and we want $K = 4$ superpixels.
 \begin{itemize}
     \item Grid interval $S = \sqrt{100/4} = 5$.
@@ -562,7 +596,7 @@ Since $11 < 17.22$, update pixel: $d(i) = 11$, $l(i) = 2$.
 Pixel $P_i$ successfully finds its nearest center and is assigned to Cluster 2.
 
 
-\section{The Goal of Image Matching}
+\chapter{The Goal of Image Matching}
 The core problem introduced in this section is determining how similar two images are, which is highly dependent on the application.
 The course breaks this down into two main approaches:
 \begin{itemize}
@@ -572,7 +606,7 @@ The course breaks this down into two main approaches:
           ``points of interest'' and matching them across different images. This is crucial for precise tasks like 3D reconstruction and image registration.
 \end{itemize}
 
-\subsection{The Local Matching Pipeline}
+\section{The Local Matching Pipeline}
 We focuses heavily on the Local Matching approach. The standard three-step pipeline forms the backbone of the rest of the course:
 \begin{enumerate}
     \item \textbf{Feature Detection:} Finding the specific ``interest points'' (like corners or blobs) on each image.
@@ -580,7 +614,7 @@ We focuses heavily on the Local Matching approach. The standard three-step pipel
     \item \textbf{Feature Matching:} Comparing these descriptions between two images to find the matching pairs.
 \end{enumerate}
 
-\subsection{Degrees of Difficulty in Matching}
+\section{Degrees of Difficulty in Matching}
 Local matching ranges from ``easy'' to ``much harder'' based on the transformations between the two images:
 \begin{itemize}
     \item \textbf{Easy:} The images only have simple translations (shifting up/down/left/right).
@@ -588,19 +622,19 @@ Local matching ranges from ``easy'' to ``much harder'' based on the transformati
     \item \textbf{Much Harder:} The images feature dramatic changes in the 3D viewpoint and heavy illumination changes.
 \end{itemize}
 
-\subsection{Integration from the DoG and SIFT Paper}
+\section{Integration from the DoG and SIFT Paper}
 To solve these ``much harder'' cases, like the NASA Mars Rover images, we cannot rely on simple pixel comparisons. David Lowe's paper
 introduces \textbf{SIFT (Scale-Invariant Feature Transform)} specifically to address this. The goal is to transform image data into
 coordinates that are invariant to image scaling and rotation, and highly robust against 3D viewpoint changes and lighting variations.
 This allows a single local feature to find its correct match even in a massive database of features.
 
-\section{Scale Invariant Feature detectors}
+\chapter{Scale Invariant Feature detectors}
 In Chapter 1, we established the need to find ``interest points'' (like corners or blobs). However, simple corner detectors fail when
 the distance to the object changes. A leaf might look like a tiny blob from 100 meters away, but show sharp corners from 1 meter away.
 To perform robust matching, we need an algorithm that finds features regardless of how zoomed in or out the image is. David Lowe's SIFT
 (Scale-Invariant Feature Transform) solves this.
 
-\subsection{Building ``Scale-Space''}
+\section{Building ``Scale-Space''}
 To teach a computer to look at an image at different scales, we blur it. Blurring removes high-frequency details, simulating how an object appears from further away.
 
 The ``scale space'' of an image is a function $L(x,y,\sigma)$, produced by convolving the original image $I(x,y)$ with a 2D Gaussian blur filter $G(x,y,\sigma)$:
@@ -609,13 +643,13 @@ The ``scale space'' of an image is a function $L(x,y,\sigma)$, produced by convo
 \end{equation}
 Where $\sigma$ (sigma) is the scale (amount of blur).
 
-\subsection{The Blob Finder: Laplacian of Gaussian (LoG)}
+\section{The Blob Finder: Laplacian of Gaussian (LoG)}
 To find interesting features at these scales, we look for ``blobs'' (uniform areas surrounded by sharp variations). The mathematical tool for finding blobs is the Laplacian, which measures the 2nd spatial derivative of the image.
 \begin{equation}
     \nabla^2 L = \frac{\partial^2 L}{\partial x^2} + \frac{\partial^2 L}{\partial y^2}
 \end{equation}
 
-\subsubsection{Numerical Example: 1D LoG}
+\subsection{Numerical Example: 1D LoG}
 Imagine a 1D row of pixel intensities with a bright blob in the center:
 \begin{center}
     $I = [0, 0, 10, 10, 0, 0]$
@@ -630,13 +664,13 @@ The 2nd derivative (difference of differences) highlights the center of the peak
 \end{center}
 When applied in 2D to a blurred image, this filter looks like a ``Mexican hat''. The algorithm searches for the specific $\sigma$ where this 2nd derivative response is absolutely maximized.
 
-\subsection{The Genius Shortcut: Difference of Gaussians (DoG)}
+\section{The Genius Shortcut: Difference of Gaussians (DoG)}
 Calculating the 2nd derivative for every pixel at every possible scale is computationally expensive. Lowe's SIFT provides an optimization based on the heat diffusion equation: subtracting two images with different levels of Gaussian blur closely approximates the normalized Laplacian of Gaussian.
 \begin{equation}
     D(x,y,\sigma) = L(x,y,k\sigma) - L(x,y,\sigma)
 \end{equation}
 
-\subsection{How Different Should the Two Scales Be? (The multiplier $k$)}
+\section{How Different Should the Two Scales Be? (The multiplier $k$)}
 This is a crucial parameter in SIFT. We don't just pick random blur levels. The scale space is divided into ``octaves''. An octave corresponds to doubling the value of $\sigma$.
 Within each octave, Lowe divides the space into an integer number of intervals, $s$. The scale multiplier $k$ between two adjacent blurred images is defined as:
 \begin{equation}
@@ -645,13 +679,13 @@ Within each octave, Lowe divides the space into an integer number of intervals, 
 In his foundational paper, Lowe recommends $s = 3$ intervals per octave. Therefore, the difference in scale between two adjacent blurred images is $k = 2^{1/3} \approx 1.2599$.
 If your base scale is $\sigma = 1.6$, the next image in the stack is blurred at $\sigma = 1.6 \times 1.26 = 2.016$.
 
-\subsubsection{Numerical Example: DoG Calculation}
+\subsection{Numerical Example: DoG Calculation}
 Suppose at pixel coordinate $(50, 50)$, the intensity in the first blurred image $L(x,y,\sigma)$ is $145$. In the next progressively blurred image $L(x,y,k\sigma)$, the intensity is $130$. The DoG value for that pixel at that scale is:
 \begin{equation}
     D(50,50,\sigma) = 130 - 145 = -15
 \end{equation}
 
-\subsection{Extrema Detection (Finding the Keypoints)}
+\section{Extrema Detection (Finding the Keypoints)}
 Once we have a 3D stack of DoG images (X, Y, and Scale), we look for local extrema (maxima or minima) to identify keypoints.
 
 A single pixel is compared against its 26 neighbors in the 3D scale-space:
@@ -661,7 +695,7 @@ A single pixel is compared against its 26 neighbors in the 3D scale-space:
     \item 9 pixels directly below it in the previous scale ($\sigma$).
 \end{itemize}
 
-\subsection{Numerical Example: 3D Neighborhood Check}
+\section{Numerical Example: 3D Neighborhood Check}
 Imagine a $3 \times 3 \times 3$ cube of DoG values. The center pixel is our candidate.
 \begin{itemize}
     \item \textbf{Scale $\sigma$ (Below):} All 9 pixels have values ranging from $-5$ to $12$.
@@ -670,7 +704,7 @@ Imagine a $3 \times 3 \times 3$ cube of DoG values. The center pixel is our cand
 \end{itemize}
 Because $45$ is strictly greater than all 26 surrounding values, this coordinate $(x, y, k\sigma)$ is officially recorded as a keypoint!
 
-\subsection{Filtering Bad Keypoints (Additional Info)}
+\section{Filtering Bad Keypoints (Additional Info)}
 Simply finding extrema isn't enough; some points are unstable. SIFT applies two more filters:
 \begin{enumerate}
     \item \textbf{Low Contrast Filter:} If the absolute DoG value at the extremum is less than a threshold (Lowe uses $0.03$), it is discarded as noise.
@@ -681,16 +715,16 @@ Simply finding extrema isn't enough; some points are unstable. SIFT applies two 
 
 
 
-\section{Feature descriptors}
+\chapter{Feature descriptors}
 In Chapter 2, we found the $(x, y)$ coordinates and scale $(\sigma)$ of our keypoints. To match them, we need to describe what the
 visual area around them looks like.
 
-\subsection{The Problem with ``Raw Patches''}
+\section{The Problem with ``Raw Patches''}
 The simplest method is to take a square window (a patch) of pixels around the keypoint and list the pixel intensities. However, if the camera rotates even slightly between two images,
 the pixels in that square window will completely shift. A pixel-by-pixel comparison (Sum of Squared Differences) will fail.
 We need a descriptor that is \textbf{invariant to rotation}.
 
-\subsection{Clarifying the Keypoint Neighborhood}
+\section{Clarifying the Keypoint Neighborhood}
 A common confusion is assuming the descriptor is built from a single pixel. A keypoint is just a central coordinate.
 SIFT builds its descriptor by analyzing a \textbf{neighborhood} of pixels around that center point. The size of this neighborhood
 depends on the keypoint's characteristic scale $(\sigma)$ found in Chapter 2.
@@ -701,10 +735,10 @@ For every pixel in this neighborhood, the computer calculates two values using f
     \item \textbf{Gradient Orientation $(\theta)$:} Which direction is the brightest (from $0^\circ$ to $360^\circ$).
 \end{itemize}
 
-\subsection{Finding ``North'': The 36-Bin Orientation Histogram}
+\section{Finding ``North'': The 36-Bin Orientation Histogram}
 To make our descriptor immune to rotation, SIFT gives each keypoint its own distinct ``North'' based on the visual data around it.
 
-\subsubsection{How the 36 Bins Work}
+\subsection{How the 36 Bins Work}
 The algorithm creates a histogram with 36 bins. Since a full circle is $360^\circ$, each bin covers exactly $10^\circ$.
 \begin{itemize}
     \item Bin 1: $0^\circ$ to $9^\circ$
@@ -713,7 +747,7 @@ The algorithm creates a histogram with 36 bins. Since a full circle is $360^\cir
     \item Bin 36: $350^\circ$ to $359^\circ$
 \end{itemize}
 
-\subsubsection{Numerical Example: Voting for an Orientation}
+\subsection{Numerical Example: Voting for an Orientation}
 Imagine the neighborhood around our keypoint has 50 pixels. We calculate the angle and magnitude for each:
 \begin{itemize}
     \item \textbf{Pixel A:} $\theta = 12^\circ$, Magnitude $= 5$. It belongs to \textbf{Bin 2}. We add 5 to Bin 2.
@@ -723,10 +757,10 @@ Imagine the neighborhood around our keypoint has 50 pixels. We calculate the ang
 After processing all 50 pixels, we look at the 36 bins. Suppose \textbf{Bin 5 ($40^\circ - 49^\circ$)} has the highest total magnitude (a massive spike in the histogram).
 This means the dominant visual feature around this keypoint is pointing at roughly $45^\circ$. SIFT now rotates the entire coordinate system of this patch by $45^\circ$. \textbf{The patch is now rotationally invariant!}
 
-\subsection{Building the 128-Dimensional SIFT Descriptor}
+\section{Building the 128-Dimensional SIFT Descriptor}
 Now that the patch is scaled and rotated correctly, we build the actual mathematical fingerprint.
 
-\subsubsection{The Grid and the 8 Bins}
+\subsection{The Grid and the 8 Bins}
 \begin{enumerate}
     \item Take a \textbf{$16 \times 16$ window} of pixels centered on the keypoint.
     \item Divide this window into a \textbf{$4 \times 4$ grid}. This gives us 16 distinct ``sub-regions'', each containing $4 \times 4 = 16$ pixels.
@@ -734,18 +768,18 @@ Now that the patch is scaled and rotated correctly, we build the actual mathemat
     \item We tally up the gradients of the 16 pixels into these 8 bins.
 \end{enumerate}
 
-\subsubsection{What Information is in the 8 Bins?}
+\subsection{What Information is in the 8 Bins?}
 The 8 bins describe the geometry of the lines inside that specific sub-region.
 For example, look at the top-left sub-region. If it contains a sharp horizontal edge, the gradients will point straight up or straight down. Therefore, the ``North'' ($90^\circ$) and ``South'' ($270^\circ$) bins will have huge numbers, while the other 6 bins will be close to zero.
 
-\subsubsection{The Final Vector}
+\subsection{The Final Vector}
 You have 16 sub-regions. Every sub-region gives you 8 numbers (the 8 bins).
 \begin{center}
     \textbf{16 sub-regions $\times$ 8 bins = 128 numbers.}
 \end{center}
 The final 128-dimensional descriptor is literally just a list of these numbers: $[v_1, v_2, v_3, ..., v_{128}]$. It tells the computer exactly how edges are spatially arranged around the keypoint.
 
-\subsection{Solving Illumination Invariance}
+\section{Solving Illumination Invariance}
 What if one image was taken in bright daylight and the other at dusk? The 128 numbers will be drastically different because the gradient magnitudes will be smaller in the dark image.
 To fix this, we normalize the 128-dimensional vector to have a ``unit length'' of 1:
 \begin{equation}
@@ -756,15 +790,15 @@ By doing this, global contrast changes are cancelled out. SIFT also caps any sin
 
 
 
-\section{Introduction to Feature Matching}
+\chapter{Introduction to Feature Matching}
 Once local features are detected (Chapter 2) and described (Chapter 3), the final step in the pipeline is feature matching:
 finding the one-to-one correspondences between features in Image 1 and Image 2. This requires defining a \textbf{Similarity Measure}
 (how to score the match mathematically) and a \textbf{Matching Strategy} (how to decide which matches to keep).
 
-\subsection{Similarity Measures for Image Patches}
+\section{Similarity Measures for Image Patches}
 When using raw image patches of size $W \times W$ (denoted as $N1$ and $N2$) instead of SIFT descriptors, two primary mathematical methods are used to compute their similarity.
 
-\subsubsection{Sum of Squared Differences (SSD)}
+\subsection{Sum of Squared Differences (SSD)}
 SSD calculates the direct pixel-by-pixel intensity difference:
 \begin{equation}
     \phi_{SSD}(N1,N2) = -\sum_{k,l=-\frac{W}{2}}^{\frac{W}{2}} (N1(k,l) - N2(k,l))^2
@@ -778,14 +812,14 @@ For two $2 \times 2$ patches:
     SSD = - [ (10-12)^2 + (20-18)^2 + (10-10)^2 + (20-20)^2 ] = - [ 4 + 4 + 0 + 0 ] = \mathbf{-8}
 \end{equation*}
 
-\subsubsection{Normalized Cross Correlation (NCC)}
+\subsection{Normalized Cross Correlation (NCC)}
 SSD is highly sensitive to lighting changes. NCC corrects for affine changes in illumination by normalizing the pixels against the patch's mean ($\mu$) and standard deviation ($\sigma$):
 \begin{equation}
     \phi_{NCC}(N1,N2) = \frac{\sum_{k,l=-\frac{W}{2}}^{\frac{W}{2}} (N1(k,l)-\mu_1)(N2(k,l)-\mu_2)}{W^2 \sigma_1 \sigma_2}
 \end{equation}
 Where $\mu_i$ is the mean brightness of patch $i$, and $\sigma_i$ is its standard deviation. This function returns a score exactly in the range $[-1, 1]$, where $1$ is a perfect match. By subtracting the mean, a bright image and a dark image of the exact same object will perfectly match.
 
-\subsection{Similarity Measures for Histograms}
+\section{Similarity Measures for Histograms}
 When matching SIFT descriptors (which are 128-bin histograms), Euclidean distance is standard, but the course also highlights \textbf{Histogram Intersection}:
 \begin{equation}
     HI(H^1,H^2) = \sum_{i=1}^{N_{bin}} \min(H_i^1, H_i^2)
@@ -796,7 +830,7 @@ This measures the overlapping area between two histograms.
 Let $H^1 = [10, \mathbf{5}, \mathbf{2}]$ and $H^2 = [\mathbf{8}, 20, 3]$.
 The intersection is $\min(10,8) + \min(5,20) + \min(2,3) = 8 + 5 + 2 = \mathbf{15}$.
 
-\subsection{Matching Strategy: Lowe's Ratio Test}
+\section{Matching Strategy: Lowe's Ratio Test}
 A Brute Force approach checks every feature against every other feature and picks the minimum distance. However, in environments with repeating patterns (like windows on a building), multiple features will look mathematically identical, leading to false matches.
 
 David Lowe introduced the \textbf{Ratio Test}:
@@ -805,23 +839,23 @@ David Lowe introduced the \textbf{Ratio Test}:
 \end{equation}
 If the ratio is low (e.g., $0.1$), the best match is uniquely excellent. If the ratio is high (e.g., $0.9$), it means the best match and second-best match are almost identical, indicating an ambiguous match. SIFT strictly rejects any match where this ratio is $> 0.8$.
 
-\subsection{Matching Through an Affinity Matrix}
+\section{Matching Through an Affinity Matrix}
 An Affinity Matrix $A$ represents the similarity between all pairs of features, where $A(i,j)$ is the score between feature $i$ in Image 1 and feature $j$ in Image 2. This approach can combine spatial location and visual appearance.
 
-\subsubsection{Spatial Vicinity (Distance Matrix $E$)}
+\subsection{Spatial Vicinity (Distance Matrix $E$)}
 \begin{equation}
     E(i,j) = e^{-\frac{||p_i^1 - p_j^2||^2}{2\sigma^2}}
 \end{equation}
 Here, $p_i^1$ and $p_j^2$ are the spatial $(X, Y)$ coordinates of the keypoints. $\sigma$ is a tolerance parameter dictating how much physical movement is allowed. If a point moves minimally, the squared distance $||p_i^1 - p_j^2||^2$ is small, and $e^0 \approx 1$.
 
-\subsubsection{Combined Affinity Matrix ($A$)}
+\subsection{Combined Affinity Matrix ($A$)}
 To combine the spatial score $E$ with the appearance score $NCC$, the formula is:
 \begin{equation}
     A(i,j) = E(i,j) \times \frac{1}{2}(\phi_{NCC}(Q_i^1, Q_j^2) + 1)
 \end{equation}
 The expression $\frac{1}{2}(NCC + 1)$ shifts the NCC score from $[-1, 1]$ to $[0, 1]$. Therefore, an entry in $A$ will only approach $1.0$ if the features are physically close AND look visually identical.
 
-\subsubsection{Extracting Matches from $A$}
+\subsection{Extracting Matches from $A$}
 To guarantee a 1-to-1 correspondence, a match at $(i,j)$ is only accepted if:
 \begin{enumerate}
     \item $A(i,j)$ is the maximum value in row $i$.
@@ -837,10 +871,10 @@ To guarantee a 1-to-1 correspondence, a match at $(i,j)$ is only accepted if:
 
 
 
-\section{Introduction to Motion Analysis}
+\chapter{Introduction to Motion Analysis}
 Motion analysis involves analyzing video sequences rather than static images to focus on motion information. This adds a temporal dimension, allowing the visual system to perceive structures and details that might be invisible in a single frame.
 
-\subsection{The Image Sequence}
+\section{The Image Sequence}
 An image sequence is defined as a series of $N$ images, or frames, acquired at discrete time instants.
 The mathematical representation of frame timing is:
 \begin{equation}
@@ -853,10 +887,10 @@ Where:
     \item $\Delta t$: The fixed (usually small) time interval between acquisitions (e.g., 1/30s for standard video).
 \end{itemize}
 
-\subsection{Brightness Constancy Assumption}
+\section{Brightness Constancy Assumption}
 A fundamental assumption in motion analysis is that the illumination of the scene does not vary significantly within the observation interval. Under this assumption, changes in pixel intensity from time $t_1$ to $t_2$ are attributed solely to the relative motion between the scene and the camera.
 
-\subsection{Core Problems in Motion Analysis}
+\section{Core Problems in Motion Analysis}
 Motion analysis can be categorized into several distinct computational problems:
 
 \begin{itemize}
@@ -866,7 +900,7 @@ Motion analysis can be categorized into several distinct computational problems:
     \item \textbf{Tracking}: Estimating the trajectories (2D or 3D) of specific points or objects over a sequence of frames using tools like dynamic filters (e.g., Kalman filters).
 \end{itemize}
 
-\subsection{Methodological Summary}
+\section{Methodological Summary}
 The course focuses on the following low-level algorithms and temporal features:
 \begin{enumerate}
     \item \textbf{Change Detection}: Used for motion segmentation when the camera is stationary.
@@ -877,10 +911,10 @@ The course focuses on the following low-level algorithms and temporal features:
 
 
 
-\section{Motion Segmentation: Change Detection}
+\chapter{Motion Segmentation: Change Detection}
 When the camera is stationary, motion segmentation is implemented as a difference between the current frame and a reference model.
 
-\subsection{Basic Thresholding}
+\section{Basic Thresholding}
 The threshold $\tau$ is used to separate motion from noise.
 \begin{equation}
     M_{t}(x,y)=\begin{cases}1 & \text{if } |I_{t}(x,y)-I_{ref}(x,y)| > \tau \\ 0 & \text{otherwise}\end{cases}
@@ -888,23 +922,23 @@ The threshold $\tau$ is used to separate motion from noise.
 
 The threshold $\tau$ depends on acquisition conditions and sensor noise.
 
-\subsubsection{Statistical Basis}
+\subsection{Statistical Basis}
 In an empty scene, the difference $|I_t - I_{t+1}|$ follows a Quasi-Gaussian distribution caused by sensor noise and illumination instability (e.g., neon flickering).
 \begin{itemize}
     \item \textbf{Stable Conditions}: Narrow distribution. Typically $\tau \approx 10$.
     \item \textbf{Unstable Conditions}: Wide distribution. Typically $\tau \approx 30$.
 \end{itemize}
 
-\subsection{Background Modeling Versions}
+\section{Background Modeling Versions}
 
-\subsubsection{Version 1: Static Average}
+\subsection{Version 1: Static Average}
 The reference image is the average of the first $N$ frames:
 \begin{equation}
     B = \frac{1}{N} \sum_{t=1}^{N} I_t
 \end{equation}
 \textbf{Numerical Example:} For $N=2$, if a pixel $(x,y)$ has intensities $I_1=100$ and $I_2=110$, then $B=105$. This value is fixed.
 
-\subsubsection{Version 2: Running Average (Temporal Filtering)}
+\subsection{Version 2: Running Average (Temporal Filtering)}
 Handles slow illumination changes by updating the background model $B_t$ at each frame using a learning rate $\alpha$:
 \begin{equation}
     B_t = (1-\alpha)B_{t-1} + \alpha I_t
@@ -912,17 +946,17 @@ Handles slow illumination changes by updating the background model $B_t$ at each
 \textbf{Numerical Example:} If $B_{t-1}=100$, $I_t=120$, and $\alpha=0.05$:
 $B_t = (0.95 \times 100) + (0.05 \times 120) = 95 + 6 = 101$.
 
-\subsubsection{Version 3: Selective Update for Abrupt Variations}
+\subsection{Version 3: Selective Update for Abrupt Variations}
 Designed to handle persistent changes (e.g., a moved object). It compares the current frame to a frame from $\Delta t$ steps ago to check for persistence.
 \begin{equation}
     B_t = \begin{cases} B_{t-1} & \text{if } |I_t - I_{t-\Delta t}| > \tau' \\ (1-\alpha)B_{t-1} + \alpha I_t & \text{otherwise} \end{cases}
 \end{equation}
 \textbf{Numerical Example:} A person walks through a pixel. $|I_t - I_{t-\Delta t}|$ is high (e.g., 50). The background is NOT updated ($B_t = B_{t-1}$), preventing the "ghosting" of the person into the background.
 
-\subsection{Blob Analysis and Descriptors}
+\section{Blob Analysis and Descriptors}
 After thresholding, pixels are grouped into \textbf{Blobs} via Connected Components. A blob is a segment where any two pixels can be connected by a path remaining inside the segment.
 
-\subsubsection{Common Descriptors}
+\subsection{Common Descriptors}
 \begin{itemize}
     \item \textbf{Centroid ($\bar{x}, \bar{y}$)}: $\bar{x} = \frac{1}{A}\sum x_i, \bar{y} = \frac{1}{A}\sum y_i$, where $A$ is Area.
     \item \textbf{Area}: Total number of pixels in the blob.
@@ -930,7 +964,7 @@ After thresholding, pixels are grouped into \textbf{Blobs} via Connected Compone
     \item \textbf{Higher Order Moments}: Used for shape description and orientation.
 \end{itemize}
 
-\subsection{Recap}
+\section{Recap}
 \begin{enumerate}
     \item \textbf{Static Average}: $B = \frac{1}{N} \sum I_t$. (Assumes constant background).
     \item \textbf{Running Average}: $B_t = (1-\alpha)B_{t-1} + \alpha I_t$. (Handles slow illumination changes).
@@ -944,11 +978,11 @@ After thresholding, pixels are grouped into \textbf{Blobs} via Connected Compone
 
 
 
-\section{Correspondence: Optical Flow}
+\chapter{Correspondence: Optical Flow}
 Correspondence identifies matching elements across frames acquired close in time ($t_k = t_0 + k\Delta t$).
 This allows us to calculate \textbf{Optical Flow}: the apparent motion of brightness patterns.
 
-\subsection{The Concept of Optical Flow}
+\section{The Concept of Optical Flow}
 In the context of motion, correspondence can be viewed as estimating the \textbf{apparent motion} of the brightness pattern,
 known as \textbf{Optical Flow}.
 
@@ -962,7 +996,7 @@ The slides provide two classic examples:
           (apparent motion). This illustrates the difference between the motion field (the 2D projection of 3D motion) and the optical flow.
 \end{itemize}
 
-\subsection{Correlation-Based Approaches}
+\section{Correlation-Based Approaches}
 This is a "search-based" method for finding correspondence. Instead of using calculus, we look for matching pixel patterns.
 \textbf{The Algorithm:}
 \begin{enumerate}
@@ -975,7 +1009,7 @@ This is a "search-based" method for finding correspondence. Instead of using cal
           is the local estimate of apparent motion.
 \end{enumerate}
 
-\subsubsection{Similarity Measures}
+\subsection{Similarity Measures}
 We measure how "close" two patches are pixel-by-pixel using mathematical functions. Two common measures are:
 
 \textbf{1. Sum of Squared Differences (SSD):}
@@ -1001,7 +1035,7 @@ We measure how "close" two patches are pixel-by-pixel using mathematical functio
     \item \textbf{Range}: The result is always between $[-1, 1]$, where $1$ is a perfect match.
 \end{itemize}
 
-\subsubsection{Numerical Example: SSD Calculation}
+\subsection{Numerical Example: SSD Calculation}
 Given patch $N_1 = [10, 20; 10, 20]$ and candidate $N_2 = [12, 22; 12, 22]$:
 \begin{enumerate}
     \item Differences: $(10-12)=-2, (20-22)=-2, \dots$
@@ -1010,20 +1044,20 @@ Given patch $N_1 = [10, 20; 10, 20]$ and candidate $N_2 = [12, 22; 12, 22]$:
     \item $\phi_{SSD} = -16$
 \end{enumerate}
 
-\subsection{Gradient-Based Optical Flow}
+\section{Gradient-Based Optical Flow}
 The Brightness Constancy Equation assumes $I(x,y,t) = I(x+u, y+v, t+1)$. By Taylor expansion, we obtain the \textbf{Optical Flow Constraint Equation}:
 \begin{equation}
     I_x u + I_y v + I_t = 0
 \end{equation}
 where $I_x, I_y$ are spatial gradients and $I_t$ is the temporal gradient.
 
-\subsubsection{The Aperture Problem}
+\subsection{The Aperture Problem}
 One equation with two unknowns $(u, v)$ is underdetermined. We can only compute motion in the direction of the gradient (\textbf{Normal Flow}):
 \begin{equation}
     u_n = \frac{-I_t}{\sqrt{I_x^2 + I_y^2}}
 \end{equation}
 
-\subsection{The Lucas-Kanade Algorithm}
+\section{The Lucas-Kanade Algorithm}
 By assuming velocity $\mathbf{u}$ is constant over a neighborhood $N$ of $m$ pixels, we solve the overdetermined system $A\mathbf{u} = \mathbf{b}$ using the pseudo-inverse:
 \begin{equation}
     \mathbf{u} = (A^\top A)^{-1} A^\top \mathbf{b}
@@ -1033,7 +1067,7 @@ where:
     A = \begin{bmatrix} I_x(p_1) & I_y(p_1) \\ \vdots & \vdots \\ I_x(p_m) & I_y(p_m) \end{bmatrix}, \quad \mathbf{b} = \begin{bmatrix} -I_t(p_1) \\ \vdots \\ -I_t(p_m) \end{bmatrix}
 \end{equation}
 
-\subsection{Multi-Resolution Pyramids}
+\section{Multi-Resolution Pyramids}
 To handle large displacements where Taylor approximations fail, we use \textbf{Gaussian Pyramids}.
 \begin{enumerate}
     \item Estimate flow at a coarse (downsampled) level.
@@ -1043,7 +1077,7 @@ To handle large displacements where Taylor approximations fail, we use \textbf{G
     \item Final Flow: $u_{final} = \sum u_{corrections}$.
 \end{enumerate}
 
-\subsubsection{Numerical Examples}
+\subsection{Numerical Examples}
 \textbf{1. LK System:} If $A^\top A = \begin{bmatrix} 10 & 0 \\ 0 & 10 \end{bmatrix}$ and $A^\top \mathbf{b} = \begin{bmatrix} 20 \\ 50 \end{bmatrix}$, then:
 $\mathbf{u} = \begin{bmatrix} 0.1 & 0 \\ 0 & 0.1 \end{bmatrix} \begin{bmatrix} 20 \\ 50 \end{bmatrix} = \begin{bmatrix} 2 \\ 5 \end{bmatrix}$.
 
@@ -1052,10 +1086,10 @@ $\mathbf{u} = \begin{bmatrix} 0.1 & 0 \\ 0 & 0.1 \end{bmatrix} \begin{bmatrix} 2
 
 
 
-\section{Correspondence Over Time: Feature Tracking}
+\chapter{Correspondence Over Time: Feature Tracking}
 While optical flow calculates motion between two consecutive frames, \textbf{Feature Tracking} stitches these frame-to-frame movements together to form long-term trajectories across a whole video sequence.
 
-\subsection{The Multi-Frame Tracking Algorithm}
+\section{The Multi-Frame Tracking Algorithm}
 The basic algorithm tracks salient points (like corners) through the sequence:
 \begin{enumerate}
     \item \textbf{Initialization}: Given a video sequence $I(0), I(1), \dots, I(T)$, extract a set of corners $c_i$ from the initial frame $I(0)$ for $i = 1, \dots, N$.
@@ -1073,18 +1107,18 @@ Between $t=0$ and $t=1$, optical flow estimates $\mathbf{u} = (1, -1)$. New posi
 Between $t=1$ and $t=2$, optical flow estimates $\mathbf{u} = (2, 0)$. New position: $c_1(2) = (13, 9)$.
 The track for $c_1$ is $[(10,10), (11,9), (13,9)]$.
 
-\subsection{The Kalman Filter in Tracking}
+\section{The Kalman Filter in Tracking}
 Because optical flow estimates are noisy and sometimes fail (due to occlusion or blurring), we use a \textbf{Kalman Filter} to 
 maintain robust tracks.
 
-\subsubsection{Key Roles of the Kalman Filter}
+\subsection{Key Roles of the Kalman Filter}
 \begin{itemize}
     \item \textbf{Smoothing}: It smooths out noisy trajectories by blending the actual measurements with a physical prediction model (e.g., constant velocity).
     \item \textbf{Bridging Gaps}: If a feature is temporarily lost (occluded), the filter uses the estimated state (prediction) as a hypothesis to fill in the missing measurement.
     \item \textbf{Uncertainty Tracking}: It maintains a state covariance matrix $P_t$, which provides a measure of uncertainty, often visualized as an uncertainty ellipse around the predicted position.
 \end{itemize}
 
-\subsection{The Data Association Problem}
+\section{The Data Association Problem}
 When tracking multiple targets simultaneously, the predictions of where targets will be in the next frame can overlap.
 
 If Track 1 and Track 2 are close to each other, their prediction ellipses might intersect. When a new corner is detected
@@ -1099,14 +1133,14 @@ ellipse $P_t$) and assigning the measurement to the most probable track.
 
 
 
-\section{Principles of 3D computer vision: Introduction}
+\chapter{Principles of 3D computer vision: Introduction}
 Before diving into complex math to extract 3D data from 2D images (passive vision), it is important to understand \textbf{Active 3D Sensors}. These are hardware solutions that actively emit energy into the environment to measure distance:
 \begin{itemize}
     \item \textbf{Time-of-Flight (ToF):} These sensors measure the exact time it takes for a light pulse (like a laser) to bounce off an object and return to the photodetector.
     \item \textbf{LIDAR / RADAR / IR:} LIDAR uses lasers for short/medium range, RADAR uses radio frequencies for medium/long range, and IR (Infrared) is often used for short-range depth cameras.
 \end{itemize}
 
-\subsection{The Geometry of Image Formation}
+\section{The Geometry of Image Formation}
 When using standard cameras, we model how a 3D world gets flattened onto a 2D sensor using the \textbf{perspective projection} (or pinhole camera model).
 
 \begin{itemize}
@@ -1130,7 +1164,7 @@ the camera sensor?
 \end{itemize}
 The object will be projected onto the sensor $10\text{ mm}$ to the right and $5\text{ mm}$ up from the center.
 
-\subsection{The Core Problem: Scale Ambiguity}
+\section{The Core Problem: Scale Ambiguity}
 The fundamental flaw of single-camera 2D vision is \textbf{Scale Ambiguity}. Because the perspective projection is a "lossy" and
 "non-invertible" transformation (meaning depth information $Z$ is lost during the projection), the camera cannot tell the difference
 without a prior knowledge between a small object up close and a massive object far away.
@@ -1139,7 +1173,7 @@ without a prior knowledge between a small object up close and a massive object f
 What if the object was twice as big and twice as far away? ($X = 2000, Z = 10000$). The ratio $2000 / 10000$ is still $0.2$. The
 object projects to the exact same $10\text{ mm}$ spot on the sensor!
 
-\subsection{The Solution: A Second View}
+\section{The Solution: A Second View}
 To recover the lost depth, we add a second camera. By capturing the same 3D point $P$ from two different angles, it will project
 to point $p$ on the first image plane and $p'$ on the second image plane. Comparing the difference between these two 2D points
 allows us to compute the original depth.
@@ -1148,10 +1182,10 @@ allows us to compute the original depth.
 
 
 
-\section{Stereopsis}
+\chapter{Stereopsis}
 Stereo vision (or stereopsis) is the process of inferring 3D structure and distance from two or more images taken from different viewpoints. This field of computer vision is heavily inspired by human biology. Because our eyes are set slightly apart, each eye gets a slightly different view of the world. Our brain perceives 3D depth by calculating the difference in the retinal position of the objects we see. This difference is called \textbf{disparity}.
 
-\subsection{The Math of a Simple Stereo System}
+\section{The Math of a Simple Stereo System}
 Imagine two identical cameras placed side-by-side, perfectly aligned, looking straight ahead.
 \begin{itemize}
     \item $f$: The focal length of both cameras.
@@ -1178,7 +1212,7 @@ Let's say you have a stereo camera rig where the lenses are $T = 100\text{ mm}$ 
     \item Depth: $Z = \frac{50 \cdot 100}{20} = \frac{5000}{20} = 250\text{ mm}$.
 \end{itemize}
 
-\subsection{Geometric Derivation of the Depth Equation}
+\section{Geometric Derivation of the Depth Equation}
 Why does $Z = fT/d$ work? It is based on the exact same similar triangles principle from the pinhole camera model, applied twice.
 
 Imagine looking at the camera setup from a top-down view:
@@ -1216,7 +1250,7 @@ Z = \frac{fT}{d}
 \end{equation}
 This beautifully shows that the $X$ coordinate (lateral position) cancels out entirely! Depth depends only on the camera properties ($f$, $T$) and the measured disparity ($d$).
 
-\subsection{The Two Main Problems of Stereopsis}
+\section{The Two Main Problems of Stereopsis}
 While the formula is simple, making a computer execute it is difficult. Stereo vision covers two main problems:
 \begin{enumerate}
     \item \textbf{The Correspondence Problem:} Given a specific pixel in the left image, how do we find the \textit{exact same} pixel in the right image? Solving this produces dense disparity maps.
@@ -1226,12 +1260,12 @@ While the formula is simple, making a computer execute it is difficult. Stereo v
 
 
 
-\section{Correspondence Problem}
+\chapter{Correspondence Problem}
 To calculate depth using stereo vision, we must first determine the disparity ($d = x_l - x_r$). The \textbf{Correspondence Problem} is
 the challenge of figuring out which pixel in the right image corresponds to a specific pixel in the left image. To solve it, we must decide
 which image elements to match and which similarity measure to use.
 
-\subsection{Sparse vs. Dense Correspondences}
+\section{Sparse vs. Dense Correspondences}
 We can approach matching in two ways:
 \begin{itemize}
     \item \textbf{Sparse Correspondences:} We only try to match highly distinct features, like corners or sharp edges. This is faster but only
@@ -1241,14 +1275,14 @@ We can approach matching in two ways:
     disparities (objects farther away).
 \end{itemize}
 
-\subsection{Image Rectification}
+\section{Image Rectification}
 Searching an entire 2D image for a matching pixel is computationally massive. To simplify this, we mathematically warp the stereo pair of images in
 a process called \textbf{Rectification}. Rectification perfectly aligns the two cameras virtually so that their image planes are coplanar.
 
 Because of this geometry, a point on row $y$ in the left image will \textit{always} lie on the exact same row $y$ in the right image (conjugate
 points lie on corresponding scanlines). Instead of searching a whole 2D image, we only have to search a single 1D horizontal line!
 
-\subsection{The Block Matching Algorithm (Dense Correspondences)}
+\section{The Block Matching Algorithm (Dense Correspondences)}
 To find matches, we cannot simply compare single pixels, as many pixels share the same color/intensity. Instead, we use correlation methods
 applied to small image patches (a neighborhood or window of pixels).
 
@@ -1273,7 +1307,7 @@ Let's look at a 1D example. We have a small window of 3 pixels in the left image
 \end{itemize}
 Since we want the \textit{minimum} difference, $d=1$ is our winner. The disparity is 1 pixel.
 
-\subsection{Left-Right Consistency and Occlusions}
+\section{Left-Right Consistency and Occlusions}
 Correspondences are made more difficult by \textbf{occlusions} (points in the 3D world that are visible to one camera but hidden behind an object
  from the perspective of the other camera). A point with no counterpart will break the matching algorithm.
 
@@ -1288,4 +1322,1812 @@ To solve this, we enforce \textbf{Left-Right Consistency}:
 \end{enumerate}
 If they disagree, we mark that pixel as an occlusion.
 
+
+
+
+
+
+
+
+\chapter{Understanding Image Semantics}
+
+\section{What does ``understanding the semantics of an image'' mean?}
+
+A digital image, to a computer, is nothing more than a grid of numbers. A
+grayscale image is a matrix of intensity values (typically integers in
+$[0,255]$); a colour image is three such matrices stacked together (the Red,
+Green and Blue channels). \emph{Semantics} refers to the \textbf{meaning} we
+humans attach to that grid: ``this is a face'', ``this is a sailboat'', ``this
+pixel belongs to the sky''.
+
+The central problem of this part of the course is to bridge the gap between
+the \emph{raw signal} (numbers) and the \emph{semantic content} (labels,
+objects, regions). The simplest version of this bridge is \textbf{image
+classification}.
+
+\begin{keybox}
+\textbf{Image classification} = associate a single label $y$ to a whole image,
+chosen from a fixed set of possible labels $Y$. It is the entry point to every
+more complex task (detection, segmentation), because all of them reduce, in
+some way, to classifying a region or a pixel.
+\end{keybox}
+
+\section{The supervised learning formulation}
+
+To learn a classifier we collect a \textbf{training set} of $n$ examples, each
+being an (input, output) pair:
+\[
+(\xvec_1, y_1),\ (\xvec_2,y_2),\ \dots,\ (\xvec_n,y_n),
+\qquad
+\xvec_i \in \R^p,\quad y_i \in Y,\quad i = 1,\dots,n.
+\]
+Let us unpack every symbol, because this notation reappears constantly.
+
+\begin{itemize}
+\item $\xvec_i \in \R^p$ is the \textbf{feature vector} (or \emph{representation})
+of the $i$-th image. The image has been turned into a list of $p$ real numbers.
+In the simplest case those numbers are just the pixel intensities read out one
+after another; in modern systems they are the output of a neural network. The
+number $p$ is the \textbf{dimensionality} of the representation.
+
+\item $y_i \in Y$ is the \textbf{label} of the $i$-th image. The set $Y$ might
+be $\{-1,+1\}$ (binary), $\{1,2,\dots,K\}$ ($K$ classes), etc.
+
+\item $n$ is the \textbf{number of training examples}; $p$ is the
+\textbf{number of features per example}. Keep these two apart --- confusing
+``how many images'' with ``how big is each image vector'' is a classic source
+of errors.
+\end{itemize}
+
+\subsection{Stacking the data into matrices}
+
+It is convenient to stack all the inputs into one \textbf{data matrix} $\Xmat$
+and all the labels into one vector $Y_n$:
+\[
+\Xmat =
+\begin{pmatrix}
+x_1^1 & x_1^2 & \cdots & x_1^p \\[2pt]
+x_2^1 & x_2^2 & \cdots & x_2^p \\
+\vdots & \vdots & \ddots & \vdots \\
+x_n^1 & x_n^2 & \cdots & x_n^p
+\end{pmatrix}
+\in \R^{n\times p},
+\qquad
+Y_n =
+\begin{pmatrix}
+y_1 \\ y_2 \\ \vdots \\ y_n
+\end{pmatrix}
+\in \R^{n}.
+\]
+
+\begin{keybox}
+\textbf{Row = one image, Column = one feature.} Row $i$ of $\Xmat$ is the whole
+representation $\xvec_i$ of image $i$. The superscript indexes the feature
+($x_i^{\,j}$ is the $j$-th feature of the $i$-th image). So $\Xmat$ has $n$ rows
+and $p$ columns.
+\end{keybox}
+
+\begin{exbox}{reading out a tiny image}
+Suppose each image is a $2\times 2$ grayscale patch. Flattening it row-by-row
+gives $p = 4$ features. Take the patch
+\[
+\begin{pmatrix} 170 & 238 \\ 85 & 0 \end{pmatrix}
+\;\longrightarrow\;
+\xvec = (170,\ 238,\ 85,\ 0) \in \R^4 .
+\]
+If we have $n=3$ such patches, the data matrix is $3\times 4$:
+\[
+\Xmat =
+\begin{pmatrix}
+170 & 238 & 85 & 0 \\
+68  & 136 & 17 & 170 \\
+221 & 0   & 238 & 136
+\end{pmatrix}.
+\]
+A realistic $256\times256$ grayscale image instead gives
+$p = 256\times256 = 65\,536$ features --- this is why image representations
+quickly become very high-dimensional, and why we look for smarter, more compact
+representations than raw pixels.
+\end{exbox}
+
+\section{Binary classification: the ``face / not face'' problem}
+
+The simplest classification task has only two labels. The slides use the
+classic example of a \textbf{face detector}, with the encoding
+\[
+y_i =
+\begin{cases}
+-1 & \text{if image } i \text{ is a face},\\
++1 & \text{if image } i \text{ is \emph{not} a face}.
+\end{cases}
+\]
+(The particular choice of $+1$/$-1$ and which class gets which sign is a
+convention; what matters is that the two classes are separated by a sign.)
+
+The learning procedure is:
+\begin{enumerate}
+\item collect many image patches, each turned into a feature vector
+$\xvec_i$ (a row of $\Xmat$) and labelled $\pm 1$;
+\item feed $(\Xmat, Y_n)$ to a learning algorithm, which searches for a
+\textbf{decision rule} (a curve / surface in $\R^p$, sketched as the green line
+in the slide) separating the ``face'' points from the ``not-face'' points;
+\item at the end of \textbf{training} and \textbf{validation} we obtain a
+\emph{model} $f:\R^p \to \{-1,+1\}$ that, given a \emph{new} unseen patch,
+predicts whether it is a face.
+\end{enumerate}
+
+\begin{defbox}{Training vs.\ validation (in one line each)}
+\textbf{Training} = the data the algorithm uses to fit the model's parameters.
+\textbf{Validation} = a separate held-out chunk of data used to tune choices
+(e.g.\ model complexity) and to estimate how well the model will generalise to
+new images. Reporting accuracy on data the model has already seen during
+training is misleading --- this is why the two sets are kept distinct.
+\end{defbox}
+
+\section{Multi-class classification: the label set grows}
+Reality is rarely binary. As soon as we want to distinguish many categories ---
+\emph{cat, dog, boat, car,} \dots --- we move to \textbf{multi-class
+classification}, where $Y = \{1,2,\dots,K\}$ with $K$ classes.
+
+A subtlety the slides highlight (with the
+\emph{mammal $\to$ placental $\to$ carnivore $\to$ canine $\to$ dog $\to$
+working dog $\to$ husky} chain) is that semantic labels are not flat: they form
+a \textbf{hierarchy / taxonomy}. The same image of a husky is correctly
+labelled ``animal'', ``dog'', or ``husky'' --- at different levels of
+granularity. This is exactly the structure that the large-scale dataset
+ImageNet exploits (it is built on the WordNet hierarchy), which we will meet
+again when we discuss CNNs.
+
+\begin{keybox}
+\textbf{Granularity is a design choice.} ``How many classes, and how fine?''
+is decided by the problem, not by the images. Coarser label sets are easier to
+learn but less informative; finer sets are more useful but need more data and a
+more discriminative representation.
+\end{keybox}
+
+\begin{exbox}{why more classes is harder}
+A \emph{random} binary classifier is right $1/2 = 50\%$ of the time. A random
+classifier over $K = 1000$ classes (the ImageNet challenge size) is right only
+\[
+\frac{1}{K} = \frac{1}{1000} = 0.1\%
+\]
+of the time. The ``baseline you must beat'' collapses as $K$ grows, so the
+representation $\xvec$ has to be far more descriptive to separate $1000$
+classes than to separate $2$. This is the quantitative reason multi-class
+problems are so much more demanding.
+\end{exbox}
+
+\section{Classification, Object Recognition and Instance Recognition}
+
+The slides put three closely related ideas side by side. They sound almost
+synonymous in everyday speech, but in computer vision they denote different
+tasks with different inputs, outputs and difficulties. This short chapter pins
+down the distinctions, because the rest of the course (detection,
+segmentation) builds on getting them straight.
+
+\subsection{Image classification vs.\ object recognition}
+
+Recall from Section~24.1 that \textbf{image classification} assigns one label to
+the \emph{whole} image. Nothing in that definition requires the image to
+contain a discrete ``thing''.
+
+\begin{itemize}
+\item An autumn avenue of trees can be classified as \texttt{forest} /
+\texttt{autumn} / \texttt{landscape}. There is no single object --- the label
+describes the \emph{scene as a whole}, its overall texture and colour
+distribution.
+\item A photo of a puppy can also be classified (\texttt{dog}), but here the
+label is driven by a \textbf{main object} occupying the image. In this second
+situation we could equally well say we are doing \textbf{object recognition}.
+\end{itemize}
+
+\begin{keybox}
+\textbf{The two coincide when the image is dominated by one object.}
+Image classification asks ``what is this a picture \emph{of}?'' and is happy
+with scenes, textures or objects alike. Object recognition specifically asks
+``\emph{which object} is shown?'', and only makes sense when there is an object
+to name. Whenever a single object fills the frame, classifying the image and
+recognising the object are effectively the same operation.
+\end{keybox}
+
+The practical consequence: an object-recognition problem in which each image
+contains exactly one centred object \emph{is} a classification problem, and can
+be attacked with the exact machinery of the previous sections (feature vector $\xvec_i$,
+label $y_i$, decision rule). The harder case --- many objects, anywhere in the
+image --- is \textbf{object detection}, the subject of a later chapter.
+
+\subsection{Object (category) recognition vs.\ instance recognition}
+
+The second, more subtle distinction concerns \emph{how specific} the label is.
+Consider the difference between the sentences ``that is a mug'' and ``that is
+\emph{my} mug''.
+
+\begin{defbox}{Category recognition vs.\ instance recognition}
+\textbf{Category (generic object) recognition:} decide that an image contains
+\emph{some} member of a class --- ``a car'', ``a bicycle'', ``a mug''. The
+correct answer is the same for every car ever built.
+
+\medskip
+\textbf{Instance recognition:} decide that an image contains \emph{one
+particular} object --- ``\emph{his} car'', ``\emph{that} bicycle'', ``\emph{my}
+mug''. The correct answer distinguishes this specific physical object from all
+other members of the same category.
+\end{defbox}
+
+The slides illustrate this with a collection of mugs. \emph{Category
+recognition} must say ``mug'' for all of them --- the black ``BUT FIRST
+COFFEE'' mug, the white one, the steel travel mug, the painted teacup, the
+blue one and the yellow one are all positive examples of the single class
+\texttt{mug}. \emph{Instance recognition} must instead single out one specific
+mug --- e.g.\ the purple ``Francesca'' mug --- and recognise \emph{that one},
+ignoring all the others even though they belong to the same category.
+
+\subsubsection{Why this matters: the two tasks pull in opposite directions}
+
+The distinction is not merely terminological; it dictates what the
+representation $\xvec$ must be good at.
+
+\begin{itemize}
+\item Category recognition needs a representation that is \textbf{invariant}
+to within-class differences. Colour, shape details, brand and lighting all
+change from one mug to another, yet the answer ``mug'' must stay the same. The
+representation should \emph{discard} the things that distinguish individual
+mugs and keep only what makes a mug a mug.
+
+\item Instance recognition needs a representation that is \textbf{sensitive}
+to exactly those within-class differences. The text ``Francesca'', the precise
+purple, the particular shape are now the \emph{signal}, not the noise. Here the
+representation should \emph{preserve} fine, object-specific detail.
+\end{itemize}
+
+\begin{keybox}
+\textbf{Invariance is task-dependent.} The very features that a category
+recogniser should ignore (the ones telling mugs apart) are the features an
+instance recogniser must rely on. There is no single ``best'' image
+representation in the abstract --- ``best'' only makes sense relative to the
+task and to \emph{which variations should be ignored}. This idea --- choosing
+what to be invariant to --- is the thread running through the next chapter on
+image representations.
+\end{keybox}
+
+\begin{exbox}{counting positives in the mug collection}
+Suppose a shelf photo contains $6$ mugs, of which exactly $1$ is the
+``Francesca'' mug.
+\begin{itemize}
+\item For \textbf{category recognition} of the class \texttt{mug}: all $6$
+mugs are positive examples ($y=+1$) and everything else (table, wall, etc.) is
+negative. Positives $=6$.
+\item For \textbf{instance recognition} of the specific Francesca mug: only
+$1$ object is positive; the other $5$ mugs --- despite being mugs --- are now
+\emph{negatives}, together with the rest of the scene. Positives $=1$.
+\end{itemize}
+The same $6$ objects, the same pixels, but the label vector $Y_n$ changes
+completely depending on whether we are doing category or instance recognition.
+\end{exbox}
+
+\subsection{Summary of the three tasks}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{}p{3.6cm} p{5.5cm} p{4.2cm}@{}}
+\toprule
+\textbf{Task} & \textbf{Question it answers} & \textbf{Output granularity}\\
+\midrule
+Image classification & ``What is this a picture of?'' (scene or object) &
+One label for the whole image\\
+Object (category) recognition & ``Which \emph{kind} of object is shown?'' &
+A class shared by all members\\
+Instance recognition & ``Which \emph{specific} object is shown?'' &
+A single physical object\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All three remain \emph{whole-image} tasks: they output one answer for the image
+as a whole. The moment we allow several objects at unknown positions, we step
+into detection and segmentation --- which is exactly where the course goes
+next.
+
+
+\section{Image Representations}
+
+\subsection{What is an image representation, exactly?}
+
+We have repeatedly written $\xvec_i \in \R^p$ for ``the $i$-th image as a
+vector''. This chapter asks the question the slides pose bluntly --- \emph{what
+are they, exactly?} --- and answers it.
+
+An \textbf{image representation} (also called a \textbf{feature vector} or
+\textbf{descriptor}) is a function
+\[
+\phi : \text{(images)} \longrightarrow \R^p,
+\qquad
+\xvec_i = \phi(\text{image}_i),
+\]
+that turns a raw image into a fixed-length vector of $p$ numbers. Everything
+downstream --- the data matrix $\Xmat$, the decision rule, the accuracy ---
+depends on this $\phi$. Choosing $\phi$ is arguably \emph{the} central design
+decision in classical computer vision: the same learning algorithm can succeed
+or fail entirely depending on how the images were turned into vectors.
+
+\begin{keybox}
+\textbf{The representation is the bridge.} Learning algorithms operate on
+$\R^p$, not on pixels. The map $\phi$ decides which information survives into
+$\xvec$ and which is thrown away. A good $\phi$ makes the subsequent
+classification easy (classes well separated in $\R^p$); a bad $\phi$ can make
+it impossible no matter how powerful the classifier.
+\end{keybox}
+
+\subsection{Two requirements a good representation must satisfy}
+
+The slides state two demands, which are worth reading carefully because they
+are in tension with one another.
+
+\begin{enumerate}
+\item \textbf{It must describe the whole image} (or the whole region we are
+about to classify). The vector $\xvec$ should summarise all the relevant
+content, not just an arbitrary corner.
+
+\item \textbf{It must be robust to intra-class variations} of many different
+kinds. Two images of the same class can look very different at the pixel level,
+yet $\phi$ should map them to \emph{nearby} points in $\R^p$ so that the
+classifier still groups them together.
+\end{enumerate}
+
+\subsubsection{The seven sources of intra-class variation}
+
+The slide lists the standard catalogue of nuisances --- the ways two images of
+the \emph{same} category can differ. A representation that is invariant (or at
+least robust) to these is what we are after.
+
+\begin{defbox}{The catalogue of variations}
+\begin{itemize}
+\item \textbf{Viewpoint variation:} the same object photographed from
+different angles (the statue seen frontally vs.\ from the side). The pixel
+arrangement changes completely while the identity does not.
+\item \textbf{Scale variation:} the object appears larger or smaller (close-up
+vs.\ far away). Same object, different number of pixels.
+\item \textbf{Deformation:} non-rigid objects change shape (a cat curled up
+vs.\ stretched out). The category is stable, the geometry is not.
+\item \textbf{Occlusion:} only part of the object is visible (a cat hidden
+behind a table, only its head poking out). The representation must cope with
+\emph{missing} information.
+\item \textbf{Illumination conditions:} the same scene under different lighting
+(bright, dim, coloured light, shadows). Pixel intensities shift dramatically
+even though nothing in the scene changed.
+\item \textbf{Background clutter:} the object sits in a busy, distracting
+background (a spotted cat against a similarly spotted carpet). The
+representation must separate object from context.
+\item \textbf{Intra-class variation:} genuine diversity \emph{within} the
+category itself (chairs come in countless shapes, colours and styles, yet all
+are ``chairs''). This is variation of the object identity, not of the imaging
+conditions.
+\end{itemize}
+\end{defbox}
+
+\begin{keybox}
+\textbf{The fundamental tension.} Requirement~2 pushes us to \emph{discard}
+information (be invariant to viewpoint, lighting, \dots), while requirement~1
+pushes us to \emph{keep} information (describe the whole image). Designing
+$\phi$ is the art of throwing away the nuisance variation while preserving the
+discriminative content. As noted at the end of Chapter~2, \emph{which}
+variation counts as nuisance depends on the task: viewpoint is nuisance for
+``is this a chair?'' but signal for ``which way is the chair facing?''.
+\end{keybox}
+
+\begin{exbox}{why raw pixels are not robust to illumination}
+Take a tiny $1$-pixel ``image'' of a grey patch with intensity $x = 100$.
+Photograph the identical patch under a light that is twice as bright: every
+intensity scales by $2$, so now $x' = 200$. As raw-pixel ``representations''
+these two are
+\[
+|x' - x| = |200 - 100| = 100,
+\]
+i.e.\ as far apart (on the $0$--$255$ scale) as black is from mid-grey ---
+even though it is \emph{the same patch}. A representation based directly on
+pixel values treats a mere lighting change as a huge difference. A
+representation based instead on, say, the \emph{ratio} or the \emph{gradient}
+of intensities would be unaffected: $\tfrac{\partial}{\partial u}(2x)$ and
+$\tfrac{\partial}{\partial u}(x)$ differ only by a constant factor, and a
+normalised gradient cancels it entirely. This is the concrete reason pixels
+score ``not so robust'' in the list below.
+\end{exbox}
+
+\subsection{A ladder of (global) image representations}
+
+The slide gives a short list that doubles as a \emph{historical and conceptual
+progression}, from naive to powerful. The phrase ``the list of possibilities
+is huge'' is the honest caveat: these are representative rungs, not an
+exhaustive enumeration. The word \textbf{global} means the representation
+describes the whole image (or region) with a single vector, as opposed to a
+\emph{local} description of one small patch.
+
+\begin{enumerate}
+\item \textbf{Pixels} --- \emph{(not so robust).} Use the raw intensities as
+$\xvec$. Maximally complete (nothing is discarded) but, as the example above
+shows, hopelessly sensitive to illumination, viewpoint, scale, \dots\ and
+extremely high-dimensional ($p$ = number of pixels). Almost never used
+directly.
+
+\item \textbf{Graylevel / colour / gradient histograms} --- \emph{(not too
+descriptive).} Summarise the image by \emph{counting} how often each intensity,
+colour or gradient orientation occurs, ignoring \emph{where} it occurs. This
+buys robustness (a histogram is invariant to where things are, and largely to
+small deformations and translations) at the price of discriminative power: two
+very different images can share the same histogram. \emph{Robust but blurry.}
+
+\item \textbf{Local keypoints in a Bag of Keypoints} --- \emph{(still too
+hand-crafted).} Detect interesting local patches (corners, blobs), describe
+each one, and pool them into a global vector (the Bag-of-Words idea, next
+chapter). Far more descriptive and robust than histograms, and the dominant
+approach before deep learning --- but the detectors and descriptors are
+\emph{designed by hand}, so they encode the engineer's guesses about what
+matters rather than what the data says.
+
+\item[$\;\vdots$]
+
+\item \textbf{CNN features} --- \emph{(learnt, supervised or unsupervised).}
+Instead of hand-designing $\phi$, \emph{learn} it from data. A convolutional
+neural network discovers, layer by layer, the features that best serve the
+task. This is the leap from \emph{feature engineering} to \emph{feature
+learning}, and it is why CNNs displaced the earlier rungs.
+\end{enumerate}
+
+\begin{keybox}
+\textbf{The trajectory of the whole field.} Reading the list top to bottom we
+move along two axes simultaneously: \emph{increasing robustness +
+descriptiveness}, and \emph{decreasing human hand-design}. Pixels are fully
+hand-given and fragile; histograms add a little robustness; bag-of-keypoints
+adds a lot but is still hand-crafted; CNN features are \emph{learnt from the
+data itself}. The next two chapters follow exactly this path: first
+Bag-of-Words (the peak of hand-crafted methods), then CNNs (the move to
+learned representations).
+\end{keybox}
+
+\begin{exbox}{a histogram throws away location}
+Consider two $2\times2$ binary images (pixel values in $\{0,1\}$):
+\[
+A=\begin{pmatrix}1&0\\0&1\end{pmatrix},
+\qquad
+B=\begin{pmatrix}0&1\\1&0\end{pmatrix}.
+\]
+Their graylevel histograms each count ``two $0$s and two $1$s'':
+\[
+h(A) = (2,\,2) = h(B).
+\]
+The histograms are \emph{identical}, so a histogram-based representation
+cannot tell $A$ from $B$ --- yet the images are clearly different (the
+diagonal is flipped). This is precisely the ``not too descriptive'' weakness:
+by counting values and discarding their positions, the histogram gains
+translation/permutation robustness but loses the spatial information that
+distinguishes the two patterns.
+\end{exbox}
+
+
+\section{From Hand-Crafted to Learned Features}
+
+The previous chapter ended with a ladder whose top rungs --- bag-of-keypoints
+and CNN features --- both turn many \emph{local} descriptions into one
+\emph{global} vector, but differ in whether the building blocks are designed by
+hand or learned. This chapter walks that final stretch of the ladder: first the
+\textbf{Bag of Words} construction (the high point of hand-crafted methods),
+then the general \textbf{coding--pooling} pipeline that frames it, and finally
+the conceptual leap to \textbf{feature learning}.
+
+\subsection{Bag of Words: borrowing an idea from text analysis}
+
+The motivating problem (stated on the slide) is: \emph{how do we build one
+global feature vector out of many local keypoints?} An image yields hundreds of
+local patches of \emph{variable number and position}; a classifier needs a
+\emph{single fixed-length} vector $\xvec \in \R^p$. Bag of Words is the bridge,
+and the inspiration comes from how documents are represented in text analysis.
+
+\subsubsection{The text analogy}
+
+In document analysis, a classic representation ignores word order and simply
+\textbf{counts how often each word occurs}. A text about Formula~1 will contain
+``Schumacher'', ``victory'', ``lap'', ``Grand Prix'' many times and
+``screensaver'' rarely --- so the vector of word-counts already characterises
+the topic, \emph{without any grammar or ordering}. This is the
+\textbf{bag of words}: a bag (multiset) keeps multiplicities but forgets order.
+
+\begin{defbox}{Bag of Words (text)}
+Fix a \textbf{vocabulary} of $p$ words. Represent a document by the vector
+$\xvec \in \R^p$ whose $j$-th entry is the number of times word $j$ appears.
+Word \emph{order} is discarded; only \emph{frequencies} remain. Documents on the
+same topic land near each other in $\R^p$.
+\end{defbox}
+
+\subsubsection{Transferring it to images: Bag of Keypoints}
+
+Images have no natural ``words'', so we must \emph{build} a visual vocabulary.
+The recipe (the slide calls the result a \textbf{Bag of Keypoints}):
+
+\begin{enumerate}
+\item \textbf{Extract local descriptors.} Detect many local patches across the
+image and describe each one with a local descriptor (e.g.\ SIFT). Each image now
+produces a \emph{set} of descriptor vectors --- variable in number, unordered.
+\item \textbf{Build a visual vocabulary (the ``codebook'').} Pool descriptors
+from many training images and \textbf{cluster} them (typically $k$-means) into
+$p$ groups. Each cluster centre is a \textbf{visual word} (a prototypical
+patch: a particular kind of corner, edge, texture). The set of $p$ centres is
+the codebook.
+\item \textbf{Quantise (code).} For a given image, assign each of its local
+descriptors to the nearest visual word.
+\item \textbf{Build the histogram (pool).} Count how many descriptors fell into
+each visual word. The resulting vector of $p$ counts is the image's Bag of
+Keypoints --- a fixed-length $\xvec \in \R^p$, regardless of how many keypoints
+the image had.
+\end{enumerate}
+
+\begin{keybox}
+\textbf{Why this solves the original problem.} Clustering converts a continuous,
+variable-size set of local descriptors into counts over a \emph{fixed}
+vocabulary of size $p$. ``Variable number of unordered local patches'' becomes
+``one fixed-length histogram'' --- exactly the $\xvec\in\R^p$ the classifier
+needs. Like the text version, it discards \emph{where} the words occurred,
+which buys robustness to position, small deformations and clutter.
+\end{keybox}
+
+\begin{exbox}{quantising five keypoints into a 3-word vocabulary}
+Suppose the codebook has $p=3$ visual words $\{w_1,w_2,w_3\}$ and an image
+produces $5$ local descriptors, assigned to their nearest words as
+\[
+d_1\!\to\! w_2,\quad d_2\!\to\! w_1,\quad d_3\!\to\! w_2,\quad
+d_4\!\to\! w_3,\quad d_5\!\to\! w_2 .
+\]
+Counting occurrences per word gives the Bag-of-Keypoints histogram
+\[
+\xvec = (\underbrace{1}_{w_1},\ \underbrace{3}_{w_2},\ \underbrace{1}_{w_3})
+\in \R^3 .
+\]
+A different image with $200$ keypoints would still produce a length-$3$ vector
+--- only the counts change. Often one \textbf{normalises} so the entries sum to
+$1$ (here $(0.2,0.6,0.2)$), making the descriptor invariant to the total number
+of keypoints, i.e.\ to image size.
+\end{exbox}
+
+\subsection{The coding--pooling pipeline}
+
+Bag of Words is one instance of a general two-stage template that the slide lays
+out as a full image-classification pipeline. Reading it left to right:
+
+\[
+\text{Image} \;\to\;
+\boxed{\text{Local descriptors}} \;\to\;
+\boxed{\text{Coding}} \;\to\;
+\boxed{\text{Pooling}} \;\to\;
+\boxed{\text{Linear classifier}} \;\to\; \text{label}
+\]
+
+\begin{defbox}{Coding and pooling}
+\textbf{Coding} re-expresses each local descriptor with respect to the codebook.
+In plain Bag of Words this is hard assignment to the nearest visual word; richer
+variants (the slide names \emph{VQ} --- vector quantisation, \emph{SC} ---
+sparse coding, \emph{LLC} --- locality-constrained linear coding) assign each
+descriptor \emph{softly} to several words with weights, losing less information.
+
+\medskip
+\textbf{Pooling} aggregates all the codes of an image into one fixed-length
+vector. \emph{Sum/average pooling} reproduces the histogram of counts;
+\emph{max pooling} instead records, for each visual word, the strongest
+response anywhere in the image.
+\end{defbox}
+
+The slide separates the pipeline into two regimes:
+\begin{itemize}
+\item the descriptor--coding--pooling part is \textbf{unsupervised} --- it uses
+no labels (the codebook comes from clustering, the descriptors are
+hand-designed). It is purely a way of \emph{building the representation} $\xvec$.
+\item the final \textbf{classifier} is \textbf{supervised} --- it is trained on
+the labels $y_i$. The slide names typical choices (\emph{SVM}, \emph{MRF},
+\emph{BN}); a \emph{linear} classifier usually suffices once the representation
+is good.
+\end{itemize}
+
+\subsubsection{Putting the location back: Spatial Pyramids}
+
+Pure Bag of Words throws away \emph{all} spatial information --- a face and its
+scrambled pieces give the same histogram. The fix shown on the slide
+(``pre-defined partitioning'', \textbf{SPR} = Spatial Pyramid
+Representation) is to pool not only over the whole image but also over a grid of
+sub-regions, at several levels of resolution.
+
+\begin{keybox}
+\textbf{Spatial pyramid.} Partition the image at increasingly fine levels:
+level $\ell=0$ is the whole image ($1$ cell); level $\ell=1$ splits it into
+$2\times2=4$ cells; level $\ell=2$ into $4\times4=16$ cells. Compute a
+Bag-of-Words histogram \emph{within each cell} and concatenate them all. This
+reintroduces a \emph{coarse} sense of \emph{where} things are (top-left vs.\
+bottom-right) while keeping the robustness of local histograms.
+\end{keybox}
+
+\begin{exbox}{counting the 21 spatial bins}
+With levels $\ell = 0,1,2$ the number of cells is
+\[
+\underbrace{1}_{\ell=0}\;+\;\underbrace{4}_{\ell=1}\;+\;\underbrace{16}_{\ell=2}
+\;=\; 21 \text{ cells},
+\]
+which is the ``21 Spatial Bins'' annotation on the slide. If each cell holds a
+Bag-of-Words histogram over a vocabulary of size $p$, the full pyramid
+descriptor has length
+\[
+21 \times p .
+\]
+For example a vocabulary of $p=200$ visual words yields a
+$21 \times 200 = 4200$-dimensional image descriptor. The price of restoring
+spatial information is this growth in dimensionality.
+\end{exbox}
+
+\subsubsection{From feature engineering to feature learning}
+
+Everything so far --- the keypoint detector, the descriptor, the pooling scheme,
+the pyramid --- was \textbf{designed by hand}. The slide poses the question that
+ends the classical era:
+
+\begin{quote}
+\emph{Is it possible to learn the most appropriate representation, possibly with
+a hierarchy, directly from the data?}
+\end{quote}
+
+The answer is yes, and it reframes the whole enterprise as a shift
+\textbf{from feature engineering to feature learning}.
+
+\begin{defbox}{Engineering vs.\ learning}
+\textbf{Feature engineering:} a human decides the form of $\phi$ (which
+patches, which descriptor, which pooling). The data is used only to fit the
+final classifier.
+
+\medskip
+\textbf{Feature learning:} the representation $\phi$ \emph{itself} is learned
+from data, jointly with the classifier. The system discovers which features are
+useful rather than being told.
+\end{defbox}
+
+The slide also stresses that the learned representation is \textbf{hierarchical}
+--- organised into levels of increasing abstraction:
+\begin{itemize}
+\item \textbf{Low-level features:} tiny, generic patterns --- oriented edges,
+spots, simple gradients. They look like the local descriptors we used to design
+by hand, except here they are \emph{learned}.
+\item \textbf{Mid-level features:} combinations of low-level ones into parts ---
+corners, curves, textured fragments, simple object parts.
+\item \textbf{High-level features:} combinations of parts into
+object-like structures --- e.g.\ whole faces emerging in the visualisations on
+the slide.
+\end{itemize}
+
+\begin{keybox}
+\textbf{The punchline.} A hierarchy that builds edges $\to$ parts $\to$ objects,
+\emph{learned end-to-end from data}, is exactly what a Convolutional Neural
+Network provides. The hand-crafted coding--pooling pipeline and the learned CNN
+hierarchy are doing the \emph{same job} (turn local evidence into a global,
+robust, discriminative representation) --- but the CNN \emph{learns} every stage
+instead of having it specified by an engineer. This is the doorway to the next
+chapter.
+\end{keybox}
+
+
+\section{Convolutional Neural Networks}
+
+The previous chapter closed on a promise: a representation that builds
+edges~$\to$~parts~$\to$~objects, \emph{learned} end-to-end from data, is exactly
+what a \textbf{Convolutional Neural Network} (CNN) delivers. This chapter
+unpacks the typical CNN, the softmax that turns its outputs into class
+probabilities, the dataset (ImageNet) that made it work, what the learned
+features look like, and two practical pillars --- transfer learning and data
+augmentation.
+
+\subsection{A typical CNN: two halves}
+
+The slide draws a CNN as a left-to-right stack that splits cleanly into two
+functional halves:
+\[
+\underbrace{\text{Conv}+\text{ReLU} \to \text{Pool} \to \text{Conv}+\text{ReLU}
+\to \text{Pool} \to \cdots}_{\textbf{feature learning}}
+\;\;\to\;\;
+\underbrace{\text{Flatten} \to \text{Fully connected} \to \text{Softmax}}_{\textbf{classification}}
+\]
+
+\begin{keybox}
+\textbf{A CNN is the whole Section 24.7 pipeline, learned.} The feature-learning
+half plays the role of $\phi$ (descriptors + coding + pooling), and the
+classification half plays the role of the supervised classifier --- but now
+\emph{every} stage is trained jointly from the labels. There is no
+hand-designed codebook; the network discovers its own features.
+\end{keybox}
+
+\subsubsection{The building blocks}
+
+\begin{defbox}{The layers of the feature-learning half}
+\textbf{Convolution:} slide a small learnable filter (kernel) across the image,
+computing a local weighted sum at every position. One filter produces one
+\emph{feature map} highlighting where its pattern occurs. Crucially the same
+weights are reused at every location (\emph{weight sharing}), so the layer is
+\textbf{translation-equivariant} and uses few parameters.
+
+\medskip
+\textbf{ReLU} (Rectified Linear Unit): the nonlinearity $\mathrm{ReLU}(z) =
+\max(0,z)$, applied elementwise. Without a nonlinearity, stacking layers would
+collapse into a single linear map; ReLU lets the network represent complex
+functions, and is cheap (zero out negatives, keep positives).
+
+\medskip
+\textbf{Pooling:} downsample each feature map, typically by \emph{max pooling}
+over small windows (keep the strongest response). This shrinks spatial
+resolution, grants robustness to small translations, and enlarges the
+\emph{receptive field} of later layers --- echoing exactly the pooling stage of
+Section 24.7.
+\end{defbox}
+
+The repetition conv~$\to$~ReLU~$\to$~pool is what produces the
+\textbf{hierarchy} of previus Sections: early layers see tiny patches and learn
+low-level edges; after pooling, later layers see larger regions and combine
+edges into parts, then parts into objects.
+
+\begin{defbox}{The classification half}
+\textbf{Flatten:} unroll the final stack of feature maps into one long vector
+--- this vector \emph{is} the learned representation $\xvec$.
+
+\medskip
+\textbf{Fully connected (dense) layers:} ordinary linear layers (every input
+connected to every output) that combine the features into $K$ scores, one per
+class. These scores are called \textbf{logits}.
+
+\medskip
+\textbf{Softmax:} converts the $K$ logits into a probability distribution over
+the classes (next section).
+\end{defbox}
+
+\begin{exbox}{a $3\times3$ convolution at one position}
+Take a $3\times3$ image patch and a $3\times3$ filter:
+\[
+P=\begin{pmatrix}1&0&2\\0&1&0\\2&0&1\end{pmatrix},\qquad
+W=\begin{pmatrix}1&0&-1\\1&0&-1\\1&0&-1\end{pmatrix}.
+\]
+The convolution output at this location is the elementwise product summed:
+\[
+\sum_{u,v} P_{uv}W_{uv}
+=(1)(1)+(0)(0)+(2)(-1)+(0)(1)+\cdots+(1)(-1)= -2 .
+\]
+Applying ReLU: $\max(0,-2)=0$. This particular $W$ responds to a
+left-to-right intensity \emph{drop} (a vertical edge); here the patch has no
+such edge, so after ReLU the response is zero. Sliding $W$ over the whole image
+produces one feature map of such responses.
+\end{exbox}
+
+\subsection{The softmax function}
+
+The final layer outputs $K$ real-valued logits $y_1,\dots,y_K$ (one per class),
+which can be any size, positive or negative. To interpret them as
+\textbf{class probabilities} we apply the softmax (the formula on the slide):
+\[
+\mathrm{softmax}(y_i) = \frac{e^{\,y_i}}{\sum_{j=1}^{K} e^{\,y_j}} .
+\]
+
+\begin{defbox}{Why this particular formula}
+\begin{itemize}
+\item The exponential $e^{y_i}$ is always positive, so no probability comes out
+negative.
+\item Dividing by the sum $\sum_j e^{y_j}$ \textbf{normalises} the outputs so
+they add up to $1$ --- a valid probability distribution.
+\item Exponentiation is \emph{monotonic}, so the largest logit stays the
+largest probability; softmax exaggerates differences (the biggest logit gets a
+disproportionately large share).
+\end{itemize}
+The predicted class is then $\hat{y}=\argmax_i \mathrm{softmax}(y_i)$, which is
+just the index of the largest logit.
+\end{defbox}
+
+\begin{exbox}{softmax over three classes}
+Suppose the network outputs logits $y=(2.0,\,1.0,\,0.1)$ for classes
+(car, truck, van). Exponentiate:
+\[
+e^{2.0}\approx 7.389,\quad e^{1.0}\approx 2.718,\quad e^{0.1}\approx 1.105 .
+\]
+Their sum is $7.389+2.718+1.105 = 11.212$. Dividing each term:
+\[
+\mathrm{softmax}(y)\approx
+\Big(\tfrac{7.389}{11.212},\ \tfrac{2.718}{11.212},\ \tfrac{1.105}{11.212}\Big)
+\approx (0.659,\ 0.242,\ 0.099).
+\]
+The probabilities sum to $1$, and the model predicts \texttt{car} with
+$\approx 66\%$ confidence. Note how a logit gap of $2.0$ vs $1.0$ became a
+probability gap of $0.66$ vs $0.24$ --- the exponential sharpens the contrast.
+\end{exbox}
+
+\subsection{The key to CNN success: ImageNet}
+
+CNNs were known long before they dominated; what changed around 2012 was the
+arrival of a large enough labelled dataset. The slide credits
+\textbf{ImageNet} (Deng et al., CVPR 2009).
+
+\begin{itemize}
+\item $\sim$\textbf{14 million} labelled images across $\sim$\textbf{20{,}000}
+classes, gathered from the Internet.
+\item Labels obtained by \textbf{crowdsourcing} (Amazon Mechanical Turk) ---
+manual annotation at massive scale.
+\item The associated \textbf{ImageNet Challenge (ILSVRC, 2012)} used a subset of
+$\sim$\textbf{1.2 million} training images over \textbf{1000} classes.
+\end{itemize}
+
+\begin{keybox}
+\textbf{Data was the missing ingredient.} Large CNNs have millions of
+parameters; fitting them without overfitting requires correspondingly huge
+labelled datasets. ImageNet supplied that scale, and the dramatic CNN win in the
+2012 challenge is what launched the deep-learning era in vision. This is why the
+slide calls ImageNet ``the key of success''.
+\end{keybox}
+
+\subsection{Visualising what CNNs learn}
+
+Because the features are learned rather than designed, it is natural to ask
+\emph{what} the network actually represents. The slide lists several
+complementary techniques (pointer: \texttt{cs231n.github.io/understanding-cnn/}).
+
+\begin{defbox}{Four ways to look inside a CNN}
+\textbf{Layer activations:} feed an image and display each feature map --- which
+neurons fire where. Early layers light up on edges; deeper layers on
+object parts.
+
+\medskip
+\textbf{Learnt filters:} directly visualise the convolution kernels. First-layer
+filters typically look like oriented edge and colour detectors (Gabor-like),
+confirming the low-level rung of the hierarchy.
+
+\medskip
+\textbf{Images maximising a class score:} synthesise, by optimisation, the input
+that most strongly activates a given class --- revealing what the network
+``thinks'' that class looks like (often a dreamy texture of repeated parts).
+
+\medskip
+\textbf{Class saliency maps:} for a \emph{specific} input, highlight which
+pixels most influence the class score --- showing \emph{where} the network is
+looking (e.g.\ the sail of a sailboat).
+\end{defbox}
+
+These visualisations empirically confirm the
+edges~$\to$~parts~$\to$~objects hierarchy promised in Chapter~4.
+
+\subsection{Transfer learning and pre-trained features}
+
+Training a large CNN from scratch needs ImageNet-scale data, which most real
+problems lack. \textbf{Transfer learning} reuses the knowledge already captured
+in a model trained on ImageNet, applying it to a new task or dataset (within
+some limits).
+
+\begin{defbox}{Two ways to transfer}
+\textbf{CNN as a feature extractor:} take a pre-trained network, chop off its
+classification head, and use the activations of an inner layer as a ready-made
+representation $\xvec$. Then train only a fresh, small classifier on top. The
+expensive feature-learning half is reused \emph{as is}.
+
+\medskip
+\textbf{Fine-tuning:} start from the pre-trained weights and continue
+backpropagation on the new data, adapting \emph{some or all} of the weights to
+the new problem. Typically the early (generic edge/texture) layers are kept
+frozen or changed little, while the later (task-specific) layers are adapted
+more.
+\end{defbox}
+
+\begin{keybox}
+\textbf{Why it works.} Low-level features (edges, textures) are \emph{generic}
+--- useful for almost any vision task --- so they transfer well. Only the
+higher, task-specific layers need adapting. Many models pre-trained on ImageNet
+are freely available, making transfer learning the default starting point when
+data is limited.
+\end{keybox}
+
+\subsection{Coping with limited data: data augmentation}
+
+Even with transfer learning, ``large architectures are very data hungry''. A
+cheap and powerful remedy is \textbf{data augmentation}: manufacture extra
+training examples by applying \emph{label-preserving} transformations to the
+images you already have.
+
+\begin{itemize}
+\item Typical transformations: \textbf{rotations}, \textbf{scaling}/cropping,
+flips, changes in \textbf{lighting}/colour, small translations.
+\item The key constraint is that the transformation must \emph{not change the
+label} --- a rotated dog is still a dog. Augmentation effectively teaches the
+network the invariances of Chapter~3 (to viewpoint, scale, illumination) by
+\emph{showing} it varied examples rather than building invariance in by hand.
+\end{itemize}
+
+The slide also mentions a more recent strategy: training on \textbf{synthetic
+data} (computer-generated images). This can supply unlimited labelled data, but
+a \textbf{semantic gap} remains between synthetic and real images, so
+\emph{fine-tuning on real data} is usually still needed to close it.
+
+\begin{exbox}{how augmentation multiplies a dataset}
+Start with $1000$ labelled images. Apply a small set of label-preserving
+transforms: $4$ rotations $\times$ $2$ horizontal flips $\times$ $3$ brightness
+levels gives
+\[
+4 \times 2 \times 3 = 24
+\]
+variants per image, so the effective training set grows to
+$1000 \times 24 = 24{,}000$ images --- at essentially zero labelling cost. The
+network sees the same objects under many nuisance variations, directly
+encouraging the robustness that Chapter~3 demanded of $\phi$.
+\end{exbox}
+
+
+
+
+
+\chapter{Object Detection}
+
+So far every task has produced \emph{one} answer for the whole image. Detection
+breaks that assumption: an image may contain \emph{several} objects, at unknown
+positions and sizes, and we must find them \emph{all}. This chapter formalises
+the task, derives the classic sliding-window solution from the classification
+machinery we already have, explains why it is expensive (especially with CNNs),
+surveys modern detector families, and finally places detection on a spectrum
+between plain classification and pixel-level segmentation.
+
+\section{Detection as classification of regions}
+
+The slide states the core insight plainly: \emph{object detection is in essence
+a classification problem}. The twist is \emph{what} we classify --- not the
+whole image, but \textbf{image regions of variable size}, each tested with the
+question ``is it an instance of the object, or not?''.
+
+\begin{keybox}
+\textbf{Detection $=$ classification $+$ localisation.} Instead of one label for
+the image, we slide a window over many candidate regions and classify each as
+object / background. The positions of the windows that say ``object'' give us
+the \emph{locations}; the classifier gives us the \emph{labels}. Every tool from
+Chapters~1--5 carries over --- we just apply it to regions.
+\end{keybox}
+
+\subsection{The unbalanced-class problem}
+
+A special but very common case is having \textbf{one class of interest} (faces,
+pedestrians). The slide flags a statistical difficulty: the classes are wildly
+\textbf{unbalanced}. In a $380\times220$ image one may test on the order of
+$6.5\times10^{5}$ candidate windows, yet only a handful (e.g.\ $11$ faces) are
+positive.
+
+\begin{defbox}{Training set for 1-class detection}
+The training data contains
+\begin{itemize}
+\item \textbf{positive examples:} image patches \emph{containing} the object;
+\item \textbf{negative examples:} ``background'' patches \emph{not} containing
+it.
+\end{itemize}
+Because background is everywhere and objects are rare, negatives vastly
+outnumber positives --- the source of the class imbalance.
+\end{defbox}
+
+\begin{exbox}{how extreme the imbalance is}
+With $\sim 6.5\times10^{5}$ tested windows and only $11$ true positives, the
+fraction of positive windows is
+\[
+\frac{11}{6.5\times10^{5}} \approx 1.7\times10^{-5} \approx 0.0017\% .
+\]
+A lazy detector that simply answers ``background'' to \emph{every} window would
+be correct on
+\[
+\frac{6.5\times10^{5}-11}{6.5\times10^{5}} \approx 99.998\%
+\]
+of windows --- yet it finds \emph{zero} faces. This is why raw accuracy is
+useless for detection and why we need the metrics of the next chapter
+(precision, recall), and why training must deliberately handle the imbalance.
+\end{exbox}
+
+\section{Formalising the task}
+
+\subsection{Single-class object detection}
+
+Given a class of interest (Face, Pedestrian, \dots) and an input image $I$
+containing $N$ instances, \textbf{locate all instances} --- that is, find
+\[
+\{(x_i,\,y_i,\,w_i,\,h_i)\}_{i=1}^{N},
+\]
+where each tuple is a \textbf{bounding box}: $(x_i,y_i)$ its centre (or
+top-left corner) and $(w_i,h_i)$ its width and height. The output is a
+\emph{set} of boxes, one per detected object.
+
+\subsection{Multi-class object detection}
+
+Given a \emph{set} of classes of interest $C$ (e.g.\ street objects: car,
+truck, person, traffic light) and an image $I$ with $N$ instances, find for each
+the box \emph{and} its class label:
+\[
+\{(c_i,\,x_i,\,y_i,\,w_i,\,h_i)\}_{i=1}^{N},
+\qquad c_i \in C .
+\]
+
+\begin{keybox}
+\textbf{The only change from single- to multi-class} is the extra component
+$c_i \in C$ in each tuple: every detection now carries \emph{which} class it is,
+not just \emph{where} it is. The boxes are taken axis-aligned (aligned with the
+image coordinate system), which is the standard convention.
+\end{keybox}
+
+\section{The sliding-window approach}
+
+How do we generate the candidate regions? The classic answer: \textbf{slide a
+window across the image and evaluate an object model at every location} --- and
+``evaluate an object model'' means \emph{perform image classification} on the
+window. Ask at each position: \emph{is it a face? yes / no.}
+
+To handle objects of different sizes, the window is applied at multiple
+\textbf{scales} (equivalently, the image is resized and re-scanned). So the
+search runs over all positions \emph{and} all scales.
+
+\subsection{Non-maximum suppression (NMS)}
+
+A single object usually triggers \emph{many} overlapping positive windows
+(slightly shifted or rescaled boxes all say ``face''). We want one box per
+object, so we apply \textbf{non-maximum suppression}.
+
+\begin{defbox}{Non-maximum suppression}
+Among a cluster of overlapping detections of the same object, \textbf{keep the
+one with the highest confidence score and suppress (delete) the others} that
+overlap it heavily. Repeat until no overlapping duplicates remain. The result
+is a single clean box per object instead of a messy pile of near-duplicates.
+\end{defbox}
+
+\begin{exbox}{NMS on three overlapping boxes}
+Suppose a face fires three detections with confidence scores
+\[
+b_1: 0.95,\qquad b_2: 0.80,\qquad b_3: 0.62,
+\]
+all heavily overlapping. NMS sorts by score, keeps $b_1$ (the maximum), then
+discards $b_2$ and $b_3$ because they overlap $b_1$ too much. One object
+$\Rightarrow$ one final box ($b_1$). (How much overlap counts as ``too much''
+is measured by the IoU threshold of the next chapter.)
+\end{exbox}
+
+\section{Sliding windows with CNNs}
+
+Can we just plug a CNN in as the per-window classifier? Yes in principle: apply
+the CNN to many crops of the image, and let it classify each crop as
+object/background (or as one of the classes). The slide walks through crops
+returning \texttt{Dog? no / Cat? no / Background? yes}, then a crop on the dog
+returning \texttt{Dog? yes}, and so on.
+
+\begin{keybox}
+\textbf{The cost problem.} A CNN is expensive to evaluate \emph{once}; the
+sliding window asks us to evaluate it on a \emph{huge} number of locations
+\emph{and} scales. Naively, ``apply a CNN to every crop at every scale'' is
+\textbf{computationally prohibitive}. This bottleneck is precisely what modern
+detector architectures were invented to avoid.
+\end{keybox}
+
+\begin{exbox}{why brute-force crops explode}
+Imagine evaluating windows at every pixel of a $380\times220$ image, across,
+say, $5$ scales:
+\[
+380 \times 220 \times 5 \approx 4.2\times10^{5} \text{ CNN evaluations per image.}
+\]
+If one CNN forward pass takes $5$\,ms, a single image would need
+\[
+4.2\times10^{5} \times 5\,\text{ms} \approx 2100\,\text{s} \approx 35\,\text{minutes}.
+\]
+Clearly unusable for real-time detection --- hence the need for smarter
+designs that avoid re-running the network on every crop.
+\end{exbox}
+
+\section{Modern detector families}
+
+The slide lists the main supervised approaches (it deliberately restricts to
+supervised methods).
+
+\begin{defbox}{Three families of detectors}
+\textbf{Two-stage CNN detectors} --- e.g.\ the \textbf{R-CNN family}
+(R-CNN, Fast R-CNN, Faster R-CNN). Stage~1 proposes a manageable set of
+candidate regions (instead of scanning everything); stage~2 classifies and
+refines each proposal. Accurate, historically a bit slower.
+
+\medskip
+\textbf{One-stage CNN detectors} --- e.g.\ the \textbf{YOLO family} (``You Only
+Look Once''). Predict boxes and classes \emph{directly} in a single network
+pass over the image, with no separate proposal stage. Much faster, well suited
+to real-time use.
+
+\medskip
+\textbf{Transformer-based methods} --- e.g.\ \textbf{DETR} (DEtection
+TRansformer). Cast detection as a set-prediction problem solved with attention,
+removing hand-designed components such as anchor boxes and NMS.
+\end{defbox}
+
+These all share the goal of \emph{avoiding} the brute-force ``CNN on every
+crop'' cost: two-stage methods cut the number of regions; one-stage methods cut
+the number of passes to one.
+
+\section{Different nuances: a spectrum of tasks}
+
+The slide arranges four related tasks on a spectrum from coarse to fine,
+splitting them into \emph{single-object} and \emph{multiple-object} regimes.
+
+\begin{defbox}{Four levels of image understanding}
+\textbf{Classification} \emph{(single object):} one label for the image
+(``CAT''). \emph{What} is here.
+
+\medskip
+\textbf{Classification $+$ localisation} \emph{(single object):} one label plus
+one bounding box (``CAT'' here). \emph{What} and \emph{where}, for a single
+object.
+
+\medskip
+\textbf{Object detection} \emph{(multiple objects):} a label and a box for
+\emph{each} of several objects (``CAT, DOG, DUCK''). \emph{What} and
+\emph{where}, repeated.
+
+\medskip
+\textbf{Instance segmentation} \emph{(multiple objects):} a label and a precise
+\emph{pixel mask} (not just a box) for each object. \emph{What}, \emph{where},
+and the exact \emph{shape}.
+\end{defbox}
+
+\subsection{Detection vs.\ semantic segmentation}
+
+The slide also contrasts detection with \textbf{semantic segmentation}, and the
+difference is worth stating sharply.
+
+\begin{keybox}
+\textbf{Semantic segmentation labels every pixel.} Its goal is to associate a
+semantic attribute (Sky, Grass, Cat, Cow, Trees) to \emph{every single pixel}
+of the image --- a dense, pixel-wise classification. Detection instead outputs a
+few \emph{boxes}. Note the consequence shown on the slide: plain semantic
+segmentation marks all ``cow'' pixels as \texttt{cow} but does \emph{not}
+separate two overlapping cows --- it gives the \emph{class} of each pixel, not
+the \emph{instance}. Telling individual objects apart is the job of
+\emph{instance} segmentation.
+\end{keybox}
+
+\begin{exbox}{what each task outputs for one image}
+For a photo containing a cat, a dog and a duck:
+\begin{itemize}
+\item \textbf{Classification:} one label, e.g.\ \texttt{cat} (the dominant
+object) --- a single value.
+\item \textbf{Detection:} $3$ tuples, e.g.\
+$(\texttt{cat},x_1,y_1,w_1,h_1)$, $(\texttt{dog},\dots)$,
+$(\texttt{duck},\dots)$ --- $3$ boxes.
+\item \textbf{Semantic segmentation:} for a $100\times100$ image, a label for
+each of the $100\times100 = 10{,}000$ pixels --- a full label \emph{map}, but
+two adjacent dogs would share the label \texttt{dog} with no boundary between
+them.
+\item \textbf{Instance segmentation:} the same $10{,}000$-pixel map, but with
+each object's pixels tagged by \emph{instance} (dog\#1 vs dog\#2).
+\end{itemize}
+The output grows from a single number, to a few boxes, to a dense per-pixel map
+--- increasing spatial precision at increasing cost.
+\end{exbox}
+
+
+
+
+\chapter{Object Detection Evaluation}
+
+We built detectors in Chapter~25; now we must \emph{measure} them. The previous
+chapter already warned that raw accuracy is meaningless under extreme class
+imbalance (a detector saying ``background'' everywhere scores $99.998\%$ yet
+finds nothing). This final chapter develops the metrics that actually work:
+\textbf{IoU} to decide when a box is correct, the \textbf{TP/FP/FN/TN}
+bookkeeping, and the summary scores --- \textbf{ROC}, \textbf{precision /
+recall / F1}, the \textbf{precision--recall curve} with \textbf{AP/mAP}, and
+\textbf{confusion matrices}.
+
+\section{Intersection over Union (IoU)}
+
+A predicted box is almost never \emph{pixel-perfect}, so we need a graded
+measure of how well it matches the ground-truth box. That measure is the
+\textbf{Intersection over Union}, also called the \textbf{Jaccard index}.
+
+\begin{defbox}{IoU / Jaccard metric}
+For a predicted box $P$ and a ground-truth box $G$,
+\[
+\IoU(P,G) = \frac{\text{area}(P \cap G)}{\text{area}(P \cup G)}
+= \frac{\text{area of overlap}}{\text{area of union}} \in [0,1].
+\]
+$\IoU = 1$ means the boxes coincide exactly; $\IoU = 0$ means they do not
+overlap at all. It rewards both \emph{correct position} and \emph{correct
+size} in a single number.
+\end{defbox}
+
+\begin{exbox}{computing an IoU}
+Let the ground truth be a $10\times10$ box and the prediction a $10\times10$
+box shifted so that they overlap in a $6\times8$ rectangle. Then
+\[
+\text{area}(P\cap G) = 6\times 8 = 48,
+\]
+\[
+\text{area}(P\cup G) = \underbrace{100}_{G} + \underbrace{100}_{P}
+- \underbrace{48}_{\cap} = 152,
+\]
+\[
+\IoU = \frac{48}{152} \approx 0.316 .
+\]
+With the usual threshold of $0.5$ (below), this prediction would \emph{not}
+count as a correct detection --- it overlaps too little.
+\end{exbox}
+
+\section{From IoU to TP / FP / FN / TN}
+
+IoU gives a number; to count successes and failures we threshold it. Pick a
+threshold (rule of thumb: $\IoU \geq 0.5$). Then each prediction / ground-truth
+pairing falls into one of four categories.
+
+\begin{defbox}{The four outcomes (binary detection)}
+\textbf{True Positive (TP):} a prediction matches a ground-truth box with
+$\IoU \geq$ threshold. A correct detection.
+
+\medskip
+\textbf{False Positive (FP):} a prediction with $\IoU <$ threshold (it does not
+match any real object well enough) --- a spurious detection, including the
+``low overlap'' case where a box lands near an object but not tightly enough.
+
+\medskip
+\textbf{False Negative (FN):} a ground-truth object with \emph{no} associated
+prediction --- a missed object.
+
+\medskip
+\textbf{True Negative (TN):} all the other regions (correctly \emph{not}
+detected). In detection these are essentially uncountable --- almost the entire
+image is ``correctly empty'' --- which is exactly why TN-based measures like
+accuracy are avoided here.
+\end{defbox}
+
+\begin{keybox}
+\textbf{Read the slide's examples through these definitions.} A green box
+hugging the face (high IoU) is a \textbf{TP}; a green box floating on the
+background is a \textbf{FP}; a red ground-truth face with no green box on it is
+a \textbf{FN}; a green box that grazes the face with too little overlap is
+simultaneously a \textbf{FP} (the bad prediction) and leaves a \textbf{FN} (the
+object still unmatched). Position \emph{and} tightness both matter.
+\end{keybox}
+
+\section{The ROC curve}
+
+The \textbf{Receiver Operating Characteristic} curve illustrates the
+performance of a binary classifier as its decision threshold varies. It plots
+\[
+\text{True Positive Rate (TPR, sensitivity)} =
+\frac{\text{TP}}{\text{TP}+\text{FN}}
+\quad\text{against}\quad
+\text{False Positive Rate (FPR)} = \frac{\text{FP}}{\text{FP}+\text{TN}} .
+\]
+
+\begin{keybox}
+\textbf{Reading ROC space.} The top-left corner $(\text{FPR}=0,
+\text{TPR}=1)$ is the \emph{perfect} classifier --- all objects found, no false
+alarms. The diagonal is \emph{random guessing}. A point \emph{above} the
+diagonal is ``better'', \emph{below} it is ``worse''. A better classifier bows
+toward the top-left; the curve's shape lets you pick the threshold trading off
+misses against false alarms.
+\end{keybox}
+
+Note the dependence on TN through the FPR. Because detection has essentially
+unlimited TNs, the ROC curve is more natural for balanced classification than
+for detection --- which is why detection leans on precision--recall instead.
+
+\section{Precision, Recall and the F1 score}
+
+These two metrics avoid TN entirely, making them the workhorses of detection.
+
+\begin{defbox}{Precision and recall}
+\[
+\text{Precision} = \frac{\text{TP}}{\text{TP}+\text{FP}}
+= \frac{\text{TP}}{\text{estimated positives}},
+\]
+\emph{of the things I detected, what fraction were real?} (penalises false
+alarms).
+
+\medskip
+\[
+\text{Recall} = \frac{\text{TP}}{\text{TP}+\text{FN}}
+= \frac{\text{TP}}{\text{real positives}},
+\]
+\emph{of the real objects, what fraction did I find?} (penalises misses).
+\end{defbox}
+
+The two pull against each other: lowering the confidence threshold detects more
+objects (recall~$\uparrow$) but also more junk (precision~$\downarrow$). The
+\textbf{F1 score} combines them into one number via their \emph{harmonic mean}:
+\[
+F_1 = 2\,\frac{\text{precision}\cdot\text{recall}}{\text{precision}+\text{recall}}
+= \frac{2\,\text{TP}}{2\,\text{TP}+\text{FP}+\text{FN}} .
+\]
+
+\begin{keybox}
+\textbf{Why the harmonic mean.} $F_1$ is high only when \emph{both} precision
+and recall are high; if either is near zero, $F_1$ is dragged down. The
+second form, $\tfrac{2TP}{2TP+FP+FN}$, shows it cleanly ignores TN --- ideal for
+the imbalanced detection setting.
+\end{keybox}
+
+\begin{exbox}{precision, recall and F1 together}
+A detector returns $8$ boxes; $6$ are correct (TP) and $2$ are false alarms
+(FP). The image actually contained $10$ objects, so $4$ were missed (FN).
+\[
+\text{Precision} = \frac{6}{6+2} = 0.75,
+\qquad
+\text{Recall} = \frac{6}{6+4} = 0.60 .
+\]
+\[
+F_1 = 2\cdot\frac{0.75\times 0.60}{0.75+0.60}
+= 2\cdot\frac{0.45}{1.35} \approx 0.667 .
+\]
+Cross-check with the TP form: $\tfrac{2\cdot 6}{2\cdot 6 + 2 + 4}
+= \tfrac{12}{18} \approx 0.667$. The two formulas agree.
+\end{exbox}
+
+\section{The precision--recall curve, AP and mAP}
+
+A detector assigns each box a \textbf{confidence score}. Sweeping a threshold
+over that score traces out a whole curve of (recall, precision) operating
+points --- the \textbf{precision--recall (P--R) curve}.
+
+\begin{keybox}
+\textbf{Reading the P--R curve.} At a \emph{high} confidence threshold (e.g.\
+$0.9$) the detector reports only its surest boxes: precision is high, recall is
+low (e.g.\ $P=0.98,\ R=0.3$). At a \emph{low} threshold (e.g.\ $0.1$) it reports
+almost everything: recall is high, precision is low (e.g.\ $P=0.2,\ R=0.9$). The
+``ideal'' corner is top-right --- high precision \emph{and} high recall
+simultaneously.
+\end{keybox}
+
+\begin{defbox}{Average Precision (AP) and mean AP (mAP)}
+\textbf{AP} $=$ the \emph{area under the precision--recall curve} for one class.
+A single number in $[0,1]$ summarising the whole precision/recall trade-off;
+closer to $1$ is better.
+
+\medskip
+\textbf{mAP} $=$ the \emph{mean of AP across all classes}. The standard
+single-number score for multi-class detectors.
+\end{defbox}
+
+\begin{exbox}{mAP from per-class AP}
+A $3$-class detector achieves
+\[
+\text{AP}_{\text{car}} = 0.80,\quad
+\text{AP}_{\text{person}} = 0.65,\quad
+\text{AP}_{\text{bicycle}} = 0.50 .
+\]
+Then
+\[
+\text{mAP} = \frac{0.80 + 0.65 + 0.50}{3} = \frac{1.95}{3} = 0.65 .
+\]
+The single number $0.65$ summarises the detector's quality across all three
+classes.
+\end{exbox}
+
+\section{Confusion matrices: multi-class evaluation}
+
+For multi-class problems, a \textbf{confusion matrix} $C$ shows \emph{how} the
+errors are distributed, not just how many. Rows index the \textbf{ground-truth}
+class, columns the \textbf{predicted} class; entry $C(i,j)$ counts examples of
+true class $i$ predicted as class $j$.
+
+\begin{defbox}{Reading the confusion matrix}
+\textbf{Diagonal} $C(i,i)$: correct predictions (true positives for class $i$).
+
+\medskip
+\textbf{Off-diagonal, row $i$}: the true-$i$ examples sent to other classes ---
+the \textbf{false negatives} of class $i$ (it was an $i$, called something
+else).
+
+\medskip
+\textbf{Off-diagonal, column $j$}: examples of other classes predicted as $j$
+--- the \textbf{false positives} of class $j$ (called a $j$, wasn't one).
+
+\medskip
+A good classifier has mass concentrated on the diagonal. Large off-diagonal
+entries reveal \emph{which} pairs of classes get confused with each other.
+\end{defbox}
+
+The \textbf{overall accuracy} is the total correct over the total count --- the
+sum of the diagonal:
+\[
+\text{Acc}_{\text{overall}} = \frac{\sum_i C(i,i)}{\sum_{i,j} C(i,j)} .
+\]
+(The slide writes the numerator $\sum_i C(i,i)$, the count of all correctly
+classified examples; dividing by the grand total turns it into a rate.)
+
+\begin{exbox}{a $3\times3$ confusion matrix}
+Three classes, with ground truth in rows and predictions in columns:
+\[
+C =
+\begin{array}{c|ccc}
+ & \hat{C_1} & \hat{C_2} & \hat{C_3} \\ \hline
+C_1 & 20 & 3 & 2 \\
+C_2 & 4 & 18 & 1 \\
+C_3 & 0 & 5 & 25
+\end{array}
+\]
+Diagonal (correct): $20+18+25 = 63$. Grand total: sum of all $9$ entries
+$= 78$. Overall accuracy
+\[
+\text{Acc}_{\text{overall}} = \frac{63}{78} \approx 0.808 .
+\]
+Per-class reading of $C_1$: recall $= \tfrac{20}{20+3+2} = \tfrac{20}{25}=0.80$
+(of true $C_1$, $80\%$ found); precision $= \tfrac{20}{20+4+0} =
+\tfrac{20}{24}\approx 0.83$ (of those \emph{called} $C_1$, $83\%$ were right).
+The off-diagonal $C(3,2)=5$ shows class $C_3$ is most often confused with
+$C_2$.
+\end{exbox}
+
+\section*{Closing remark}
+
+These metrics close the loop opened in Chapter~24. We began by turning images
+into vectors $\xvec$ and labels $y$; built representations (hand-crafted, then
+learned); used CNNs to classify, detect and segment; and now we can
+\emph{quantify} how well any of it works --- with measures (IoU, precision,
+recall, F1, AP/mAP, confusion matrices) designed to stay honest even under the
+severe class imbalance that real detection entails.
+
+
+
+
+
+
+\chapter{The R-CNN Family and Instance Segmentation}
+
+Chapter~25 ended on a cliff-hanger: applying a CNN to every sliding-window crop
+at every scale is \emph{computationally prohibitive}, and modern detectors were
+invented to avoid exactly this cost. This chapter develops that line of work ---
+the \textbf{R-CNN family} --- from the single-object case up to pixel-accurate
+instance segmentation with Mask R-CNN. The recurring theme is a sequence of
+engineering fixes, each removing the bottleneck left by the previous design.
+
+\section{Classification with localization: a multitask network}
+
+Before tackling \emph{many} objects, consider the easier single-object task
+from the spectrum of Chapter~25: \textbf{classification $+$ localization}. We
+want one label \emph{and} one bounding box for the dominant object.
+
+The architecture reuses a CNN backbone exactly as in Chapter~24: the image is
+passed through convolution/pooling layers and flattened into a feature vector
+(the slides use a $4096$-dimensional vector, the classic VGG/AlexNet size).
+From that single shared vector, \textbf{two heads} branch off:
+
+\begin{defbox}{The two output heads}
+\textbf{Classification head:} a fully connected layer mapping the $4096$-vector
+to $K$ class scores (the slides show $4096 \to 1000$ for the $1000$ ImageNet
+classes), turned into probabilities by softmax (Chapter~24).
+
+\medskip
+\textbf{Localization head:} a fully connected layer mapping the \emph{same}
+$4096$-vector to $4$ numbers --- the box coordinates $(x,y,w,h)$ (so
+$4096 \to 4$).
+\end{defbox}
+
+\begin{keybox}
+\textbf{Localization is treated as regression.} The classification head
+predicts a discrete label (trained with a \emph{softmax / cross-entropy loss}
+against the correct label). The localization head predicts $4$ continuous
+numbers, so it is a \textbf{regression} problem, trained with an \textbf{L2
+loss} against the correct box $(x',y',w',h')$:
+\[
+L_{\text{box}} = \lVert (x,y,w,h) - (x',y',w',h') \rVert_2^2 .
+\]
+This is the first time a head outputs real-valued coordinates rather than a
+class --- a pattern that recurs everywhere below.
+\end{keybox}
+
+\subsection{The multitask loss}
+
+The network is trained to do \emph{both} jobs at once by summing the two
+losses into a single \textbf{multitask loss}:
+\[
+L_{\text{total}} = L_{\text{cls}} + \lambda\, L_{\text{box}},
+\]
+where $\lambda > 0$ balances the two terms (classification in
+``probability'' units, regression in ``pixel'' units, so they need
+rescaling). A single backward pass then trains the shared backbone and both
+heads jointly.
+
+\begin{exbox}{why a balancing weight $\lambda$ is needed}
+Suppose at some training step the classification loss is $L_{\text{cls}}=0.7$
+(a typical cross-entropy value) while the box coordinates are in pixels and the
+L2 error is $L_{\text{box}} = (12)^2 + (8)^2 + (5)^2 + (5)^2 = 258$. Without
+weighting,
+\[
+L_{\text{total}} = 0.7 + 258 \approx 258.7,
+\]
+so the gradient is almost entirely driven by the box term --- the classifier
+would barely learn. Choosing e.g.\ $\lambda = 0.002$ gives
+\[
+L_{\text{total}} = 0.7 + 0.002\times 258 \approx 1.22,
+\]
+putting the two tasks on a comparable footing. The exact $\lambda$ is a
+hyperparameter tuned on validation data.
+\end{exbox}
+
+This single-object design does not yet handle \emph{several} objects --- we
+cannot output a fixed $4$ numbers when the number of objects is unknown. That
+is what region proposals solve.
+
+\section{Region proposals and selective search}
+
+The brute-force sliding window tested \emph{every} location and scale. The key
+idea that breaks the cost barrier is to test only a \emph{small, promising}
+subset of regions.
+
+\begin{defbox}{Region proposals}
+A \textbf{region proposal} algorithm scans the image and returns a manageable
+set of candidate boxes that are \emph{likely to contain some object} --- regardless
+of which class. Instead of $\sim\!10^5$ windows we get $\sim\!2000$ proposals,
+which a CNN can afford to examine.
+\end{defbox}
+
+The classic proposal method named on the slides is \textbf{selective search}
+(Uijlings et al., 2013). It over-segments the image into small regions
+(by colour/texture similarity) and \emph{greedily merges} adjacent regions into
+larger ones, emitting boxes at every level of merging --- so it proposes objects
+at many scales.
+
+\begin{keybox}
+\textbf{High recall, low precision --- on purpose.} Selective search is designed
+to \emph{rarely miss} a real object (high recall) at the cost of producing
+\emph{many} junk boxes (low precision). The reasoning: a later CNN classifier
+can always \emph{reject} a false proposal, but it can never \emph{recover} an
+object that was never proposed. So it is safe to over-propose. (Recall and
+precision are exactly the metrics from the previous evaluation chapter.)
+\end{keybox}
+
+\section{R-CNN: regions with CNN features}
+
+The first member of the family, \textbf{R-CNN} (Girshick et al.), combines the
+two ideas above into a two-step pipeline.
+
+\begin{defbox}{R-CNN pipeline}
+\begin{enumerate}
+\item \textbf{Propose:} run selective search to get $\sim\!2000$ Regions of
+Interest (RoIs).
+\item \textbf{Warp:} crop each RoI and \emph{resize} it to the fixed input
+size the CNN expects (the slides note $224\times224$).
+\item \textbf{Extract:} forward each warped region \emph{independently}
+through the CNN to compute its feature vector.
+\item \textbf{Classify \& refine:} classify each region (the slides note an
+external classifier such as an \textbf{SVM} may be used per class) \emph{and}
+run a \textbf{bounding-box regression} predicting $4$ corrections
+$(dx,dy,dw,dh)$ that nudge the proposal toward the true box.
+\end{enumerate}
+\end{defbox}
+
+\begin{keybox}
+\textbf{The R-CNN bottleneck.} Step~3 runs the CNN \emph{separately} on each of
+the $\sim\!2000$ regions per image --- $\sim\!2000$ independent forward passes.
+This is ``accurate but slow''. The fix, which defines the next model, is to
+notice that these regions overlap heavily and re-compute the same convolutional
+features over and over.
+\end{keybox}
+
+\begin{exbox}{counting R-CNN forward passes}
+With $2000$ proposals per image and a CNN forward pass of, say, $10$\,ms:
+\[
+2000 \times 10\,\text{ms} = 20{,}000\,\text{ms} = 20\,\text{s per image}.
+\]
+Far too slow for practical use --- and almost all of that work is redundant,
+because overlapping crops share most of their pixels (and hence their features).
+\end{exbox}
+
+\section{Fast R-CNN: share the convolution}
+
+\textbf{Fast R-CNN} reorders the operations to kill the redundancy:
+\emph{``pass the image through the convnet \emph{before} cropping, and crop the
+\emph{feature map} instead of the image.''}
+
+\begin{defbox}{Fast R-CNN pipeline}
+\begin{enumerate}
+\item Run the CNN \emph{once} on the \emph{whole} image, producing a single
+convolutional feature map.
+\item Still obtain proposals from selective search, but \emph{project} each
+proposal onto the shared feature map.
+\item For each projected RoI, apply \textbf{RoI pooling} (below) to get a
+fixed-size feature, then pass it to the FC layers and the two heads (class $+$
+box).
+\end{enumerate}
+\end{defbox}
+
+\begin{keybox}
+\textbf{The decisive change.} The expensive convolutions are computed
+\emph{once per image} instead of once per region. The $\sim\!2000$ regions now
+share the same feature map, so per-region cost is just the cheap RoI pooling
+$+$ small FC heads --- a huge speed-up over R-CNN's $2000$ full passes.
+\end{keybox}
+
+\subsection{RoI pooling}
+
+The FC heads need a \emph{fixed-size} input (e.g.\ $7\times7$), but proposals
+come in arbitrary sizes. \textbf{RoI pooling} solves this.
+
+\begin{defbox}{RoI pooling}
+Project the RoI onto the feature map, then \emph{divide it into a fixed
+$7\times7$ grid} of (roughly) equal cells and max-pool within each cell. Any
+input region, large or small, thus produces the same $7\times7$ output --- the
+fixed-length representation the heads require.
+\end{defbox}
+
+\begin{exbox}{the two quantizations in RoI pooling}
+The slides work an example with a VGG16 backbone that downsamples by a factor
+of $32$, on an $800\times800$ image, with a $665\times665$ object box.
+\begin{itemize}
+\item Mapping the image to the feature map: $800/32 = 25$ (a clean integer).
+\item Mapping the box: $665/32 = 20.78$ --- \emph{not} an integer. RoI pooling
+\textbf{rounds} it (to $20$). This is the \emph{first} quantization.
+\item Splitting that $20$-wide region into a $7\times7$ grid: $20/7 = 2.86$
+cells wide --- again not an integer, so each cell boundary is \emph{rounded
+again}. This is the \emph{second} quantization.
+\end{itemize}
+Each rounding shifts the pooled region by up to a fraction of a feature-map
+cell, which on the original image is up to $\sim\!32$ pixels of misalignment.
+For coarse classification this is tolerable; for pixel-accurate masks it is
+not --- a problem RoI Align fixes later.
+\end{exbox}
+
+\section{Faster R-CNN: learn the proposals too}
+
+Fast R-CNN still calls \emph{selective search}, a fixed, hand-designed,
+relatively slow module that is now the bottleneck. \textbf{Faster R-CNN}
+replaces it with a learned \textbf{Region Proposal Network (RPN)} that predicts
+proposals \emph{from the same feature map}, so proposals become a learned,
+fast, GPU-friendly step.
+
+\subsection{The Region Proposal Network and anchors}
+
+\begin{defbox}{Anchor boxes}
+At \emph{each point} of the convolutional feature map, place one (or several)
+reference boxes of fixed size and shape, called \textbf{anchors}. An anchor is
+a \emph{prior guess} at where an object might be, centred on that feature-map
+location. The RPN's job is to judge and adjust these anchors.
+\end{defbox}
+
+A small convolutional head slides over the feature map and, at every location,
+predicts two things per anchor:
+\begin{itemize}
+\item \textbf{Objectness} --- a \emph{binary} classification: does this anchor
+contain an object or background? (output size $1 \times 20 \times 15$ for one
+anchor over a $20\times15$ feature map in the slides' example).
+\item \textbf{Box corrections} --- a \emph{regression} of $4$ numbers per
+anchor, nudging the anchor toward the true object box (output
+$4 \times 20 \times 15$). Only computed for the positive anchors.
+\end{itemize}
+
+In practice $K$ anchors of different sizes/aspect ratios are used at each
+location, so the outputs become $K\times20\times15$ (objectness) and
+$4K\times20\times15$ (corrections). The anchors are finally \textbf{sorted by
+objectness score} and the top $\sim\!300$ are kept as proposals.
+
+\begin{exbox}{how many anchors does the RPN score?}
+With a $20\times15$ feature map and $K$ anchors per location, the total number
+of candidate boxes scored is
+\[
+K \times 20 \times 15 = 300K .
+\]
+For $K=9$ (a common choice: $3$ scales $\times$ $3$ aspect ratios) that is
+$2700$ anchors, from which the top $\sim\!300$ by objectness are passed on.
+Compare this to brute-force sliding windows ($\sim\!10^5$) --- the RPN slashes
+the candidate count by orders of magnitude while \emph{learning} which boxes
+matter.
+\end{exbox}
+
+\begin{keybox}
+\textbf{Faster R-CNN is trained with four losses jointly.} (1)~RPN objectness
+(object vs.\ not), (2)~RPN box regression, (3)~final classification over the
+object classes, (4)~final box regression. The whole detector --- backbone, RPN,
+heads --- is now a \emph{single end-to-end network} with no external proposal
+module. Note the NMS of Chapter~6 reappears inside the RPN to remove duplicate
+overlapping proposals.
+\end{keybox}
+
+\subsection{The family in one line each}
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{}p{2.6cm} p{7.5cm} p{3cm}@{}}
+\toprule
+\textbf{Model} & \textbf{What changed} & \textbf{Bottleneck removed}\\
+\midrule
+R-CNN & CNN features on $\sim\!2000$ warped crops $+$ SVM $+$ box regression &
+(baseline: slow)\\
+Fast R-CNN & CNN run once on whole image; crop the \emph{feature map} via RoI
+pooling & $2000$ redundant passes\\
+Faster R-CNN & Learned RPN with anchors replaces selective search &
+slow external proposals\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Mask R-CNN: instance segmentation}
+
+\textbf{Mask R-CNN} (He et al., 2017) extends Faster R-CNN from boxes to
+\textbf{instance segmentation} --- the finest level of the Chapter~6 spectrum,
+where each object instance gets a pixel-accurate \emph{mask}, and (unlike
+semantic segmentation) two overlapping objects of the same class are kept
+separate.
+
+\begin{defbox}{Mask R-CNN's third head}
+Take Faster R-CNN and add a \emph{third} output head alongside class and box:
+a \textbf{mask head}, implemented as a small \textbf{fully convolutional
+network} that outputs a binary mask (object pixels vs.\ not) \emph{for each
+RoI}. So each detection now carries: a class, a box, \emph{and} a per-pixel
+mask.
+\end{defbox}
+
+\subsection{RoI Align: removing the quantization}
+
+A pixel-accurate mask cannot tolerate the $\sim\!32$-pixel misalignment that
+RoI \emph{pooling} introduced through its two roundings. Mask R-CNN therefore
+replaces RoI pooling with \textbf{RoI Align}, whose defining property is
+\textbf{no quantization}.
+
+\begin{defbox}{RoI Align}
+RoI Align keeps the projected RoI coordinates as \emph{exact floating-point
+values} (no rounding of the region, and no rounding of the grid-cell
+boundaries). To read a value at a non-integer location of the feature map, it
+uses \textbf{bilinear interpolation} of the four nearest feature-map cells.
+\end{defbox}
+
+The slides walk a concrete example. The RoI maps to a region $6.25$ cells wide
+and $4.53$ tall (kept as decimals, \emph{not} rounded). With a $3\times3$
+output, the region is divided into $9$ boxes of equal real-valued size; inside
+each box, $4$ sample points are placed at fractional coordinates.
+
+\begin{exbox}{locating a sample point with no rounding}
+For a sub-box, sample-point coordinates are found by dividing the box width and
+height by $3$ and stepping. The slides' first (top-left) point:
+\[
+X = X_{\text{box}} + \tfrac{\text{width}}{3}\times 1 = 9.94,
+\qquad
+Y = Y_{\text{box}} + \tfrac{\text{height}}{3}\times 1 = 6.50,
+\]
+giving the point $(9.94,\,6.50)$. The point below it changes only $Y$:
+\[
+Y = Y_{\text{box}} + \tfrac{\text{height}}{3}\times 2 = 7.01
+\;\Rightarrow\; (9.94,\,7.01).
+\]
+These are \emph{fractional} feature-map positions --- impossible to read
+directly, which is why interpolation is needed.
+\end{exbox}
+
+\begin{defbox}{Bilinear interpolation}
+A value $P$ at a fractional point $(x,y)$ lying between the four integer-grid
+neighbours $Q_{11},Q_{21},Q_{12},Q_{22}$ (at $x_1,x_2$ and $y_1,y_2$) is the
+distance-weighted average
+\[
+P \approx \frac{y_2-y}{y_2-y_1}\!\left(\frac{x_2-x}{x_2-x_1}Q_{11}
++ \frac{x-x_1}{x_2-x_1}Q_{21}\right)
++ \frac{y-y_1}{y_2-y_1}\!\left(\frac{x_2-x}{x_2-x_1}Q_{12}
++ \frac{x-x_1}{x_2-x_1}Q_{22}\right).
+\]
+The closer a corner $Q_{ij}$ is to $(x,y)$, the more it counts. This gives a
+smooth, sub-cell-accurate read of the feature map.
+\end{defbox}
+
+\begin{exbox}{bilinear interpolation at a sample point}
+Take the sample point $(x,y) = (9.94,\,6.50)$ sitting in the unit cell with
+corners at $x_1=9.5,\ x_2=10.5$ and $y_1=6.5,\ y_2=7.5$, with feature values
+\[
+Q_{11}=0.1,\quad Q_{21}=0.2,\quad Q_{12}=0.7,\quad Q_{22}=0.3
+\]
+(at $(x_1,y_1),(x_2,y_1),(x_1,y_2),(x_2,y_2)$ respectively). The weights are
+$x$-fractions $\tfrac{x_2-x}{1}=0.56,\ \tfrac{x-x_1}{1}=0.44$ and $y$-fractions
+$\tfrac{y_2-y}{1}=1.0,\ \tfrac{y-y_1}{1}=0.0$. Then
+\[
+P \approx 1.0\,(0.56\cdot 0.1 + 0.44\cdot 0.2) + 0.0\,(\dots)
+= 0.056 + 0.088 = 0.144 .
+\]
+Because the point sits exactly on $y=6.5=y_1$, the $y$-weight kills the bottom
+row entirely and the result is just the horizontal interpolation of the top
+edge --- a useful sanity check.
+\end{exbox}
+
+After interpolating the sample points, each sub-box is max- (or average-)pooled
+over its $4$ points, yielding the fixed-size, \emph{precisely aligned} feature
+that the mask head needs.
+
+\begin{keybox}
+\textbf{Why RoI Align matters.} RoI \emph{pooling}'s roundings shift features
+by up to tens of pixels --- invisible to a box classifier but fatal to a mask
+that must follow object boundaries pixel-by-pixel. RoI \emph{Align}'s
+quantization-free, interpolated sampling is the single change that makes
+high-quality instance masks possible, completing the journey from ``which
+class is this image?'' (Chapter~1) to ``exactly which pixels belong to \emph{this}
+object?''.
+\end{keybox}
 \end{document}
