@@ -1,0 +1,5 @@
+Scoria cones. This project focuses on datasets of scoria cones, one of the most common volcanic landforms on Earth (and on any planet with current or past volcanic activity). Scoria cones may appear either as isolated structures or in groups, which are often aligned along linear geological patterns. Two datasets (Etna and El Hierro) are provided, both consisting of single-channel images representing terrain elevation, where each pixel corresponds to an altitude value. An additional dataset (Jeju) with digital elevation map only is provided, to be used if you want to address unsupervised tasks (image processing, data clustering, ...) or as an extra qualitative test. The tasks to be addressed should include the initial organization and preprocessing of the dataset. The core of the project is up to you, you may try to automatically extract or to detect of geological features and objects (e.g., volcanic cones). Alternatively, you may address a classification or clustering task (for instance, preparing a dataset of positive / negative examples using ground truth bounding boxes to extract the positive examples).
+Data
+
+
+
