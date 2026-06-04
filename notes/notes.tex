@@ -3130,4 +3130,579 @@ high-quality instance masks possible, completing the journey from ``which
 class is this image?'' (Chapter~1) to ``exactly which pixels belong to \emph{this}
 object?''.
 \end{keybox}
+
+
+
+
+
+\chapter{Semantic Segmentation}
+
+Chapter~25 placed four tasks on a spectrum from coarse to fine: classification,
+classification~$+$~localisation, detection, and instance segmentation. This
+chapter develops the dense end of that spectrum. \textbf{Semantic
+segmentation} asks the finest \emph{class-level} question: not ``what is in the
+image?'' nor ``where are the boxes?'', but \emph{``which class does every single
+pixel belong to?''}. The output is no longer a label or a handful of boxes but
+a full \textbf{label map} the same size as the input.
+
+The chapter first separates the \emph{classical} (non-semantic) notion of
+segmentation from the \emph{semantic} one, then derives the modern solution as a
+sequence of engineering fixes --- exactly the narrative style of the R-CNN
+family in Chapter~27. Each design removes the bottleneck left by the previous
+one: sliding windows are wasteful $\to$ go fully convolutional; full-resolution
+convolutions are too expensive $\to$ downsample then upsample; how does one
+upsample? $\to$ unpooling and transposed convolution; and finally we assemble
+these pieces into the encoder--decoder architectures (U-Net and its variants)
+that dominate the field. A short final section applies the same machinery to a
+\emph{regression} version of the dense-prediction problem: monocular depth
+estimation.
+
+\section{Classical segmentation: partitioning without meaning}
+
+Before the semantic version, recall the \emph{classical} image-processing
+definition of segmentation, which carries \textbf{no semantic meaning at all}.
+It only asks that the image be cut into homogeneous, non-overlapping pieces.
+
+\begin{defbox}{Classical image segmentation}
+Let $R$ be the spatial region occupied by an image. Segmentation partitions $R$
+into $n$ subregions $R_1,\dots,R_n$ satisfying:
+\begin{itemize}
+\item $\bigcup_{i=1}^{n} R_i = R$ \quad(the pieces \emph{cover} the whole
+image);
+\item each $R_i$ is a \textbf{connected set} ($i=1,\dots,n$);
+\item $R_i \cap R_j = \emptyset$ for all $i \neq j$ \quad(the pieces
+\emph{do not overlap});
+\item $Q(R_i) = \text{TRUE}$ for every $i$ \quad(each piece is internally
+\emph{homogeneous});
+\item $Q(R_i \cup R_j) = \text{FALSE}$ for any \emph{adjacent} $R_i,R_j$
+\quad(merging two neighbours would \emph{break} homogeneity).
+\end{itemize}
+Here $Q$ is a \textbf{logical predicate} defined over the points of a set ---
+for instance $Q(A) = \text{TRUE}$ iff all pixels in $A$ share the same intensity
+level.
+\end{defbox}
+
+\begin{keybox}
+\textbf{The last two conditions are the interesting pair.} $Q(R_i)=\text{TRUE}$
+forces each region to be \emph{uniform} (by whatever criterion $Q$ encodes:
+intensity, colour, texture). $Q(R_i \cup R_j)=\text{FALSE}$ for adjacent regions
+forces the partition to be \emph{maximal} --- you cannot glue two touching
+regions together and stay homogeneous, so the boundaries sit exactly where the
+image content changes. Together they say: ``cut the image along its internal
+discontinuities, nowhere else.''
+\end{keybox}
+
+\begin{exbox}{why both predicates are needed}
+Take a tiny $1\times 4$ greyscale strip of intensities $[5,5,9,9]$ and let
+$Q(A)=\text{TRUE}$ iff all pixels in $A$ are equal.
+\begin{itemize}
+\item The partition $\{[5,5],[9,9]\}$ satisfies \emph{everything}: each piece is
+uniform ($Q=\text{TRUE}$), and merging the two adjacent pieces gives $[5,5,9,9]$
+which is \emph{not} uniform ($Q=\text{FALSE}$). Valid.
+\item The over-merged partition $\{[5,5,9,9]\}$ fails $Q(R_1)=\text{TRUE}$: the
+single region is not uniform.
+\item The over-split partition $\{[5],[5],[9],[9]\}$ satisfies uniformity but
+fails the adjacency rule: the two touching $[5]$ regions \emph{can} be merged
+and stay uniform, so $Q(R_i\cup R_j)$ is wrongly TRUE. Not maximal.
+\end{itemize}
+Only the first respects both predicates --- this is the unique ``correct'' cut.
+\end{exbox}
+
+\begin{keybox}
+\textbf{No semantic meaning.} Classical segmentation will happily split a single
+cat into a ``light-fur'' region and a ``dark-fur'' region, or merge a grey cat
+with a grey rock, because it only knows about \emph{low-level homogeneity}
+($Q$), never about \emph{object categories}. It answers ``which pixels look
+alike?'', not ``which pixels are \emph{cat}?''. Supplying the missing word
+\emph{cat} is exactly the leap to \textbf{semantic} segmentation.
+\end{keybox}
+
+\section{Semantic segmentation: the task}
+
+\begin{defbox}{Semantic segmentation}
+\textbf{Label every pixel of the image with a category} from a fixed set
+(e.g.\ \texttt{Sky}, \texttt{Grass}, \texttt{Trees}, \texttt{Cat},
+\texttt{Cow}). The output is a label map of the same height and width as the
+input. Crucially, we \textbf{do not differentiate instances} --- we only care
+about \emph{pixels}.
+\end{defbox}
+
+\begin{keybox}
+\textbf{Class, not instance.} This is the single defining limitation, and it
+echoes the spectrum of Chapter~25. If two cows overlap, semantic segmentation
+paints \emph{all} their pixels with the one label \texttt{cow} and draws
+\emph{no} boundary between them --- the two animals dissolve into one
+\texttt{cow} blob. Separating cow\#1 from cow\#2 is the job of \emph{instance}
+segmentation (Mask R-CNN, Chapter~27), which adds the per-instance pixel mask
+that semantic segmentation lacks. Semantic segmentation $=$ ``per-pixel
+classification''; instance segmentation $=$ ``per-pixel classification $+$
+which object''.
+\end{keybox}
+
+\begin{exbox}{the size of the output}
+For a modest $100\times100$ RGB image and $C=5$ classes, the network must
+produce a label for each of
+\[
+100\times 100 = 10{,}000 \text{ pixels.}
+\]
+Internally it predicts a score tensor of shape $C\times H\times W =
+5\times100\times100 = 50{,}000$ numbers (a $5$-vector of class scores per
+pixel), then takes a per-pixel $\argmax$ over the $5$ classes to collapse this
+to the final $100\times100$ label map. Contrast Chapter~25: plain
+classification emitted \emph{one} label; detection emitted a handful of boxes;
+here we emit ten-thousand labels --- dense prediction is expensive precisely
+because the output is as large as the input.
+\end{exbox}
+
+\section{First idea: sliding window (and why it fails)}
+
+The most direct way to reuse our classification machinery: \textbf{slide a
+window over the image, and classify the \emph{centre pixel} of each window with
+a CNN}. Extract a patch around a pixel, push it through the CNN, and whatever
+class the CNN returns becomes that pixel's label. Do this for every pixel and
+you have a label map.
+
+This is the pixel-level analogue of the sliding-window detector of Chapter~25,
+and it inherits the very same disease.
+
+\begin{keybox}
+\textbf{Problem: very inefficient --- no feature sharing.} Adjacent pixels have
+almost-identical surrounding patches, so the CNN re-extracts essentially the
+same convolutional features over and over for overlapping windows. We are not
+\emph{reusing shared features between overlapping patches}. This is the exact
+redundancy that crippled R-CNN in Chapter~27 (re-running the CNN on $\sim2000$
+overlapping crops), now multiplied to \emph{one window per pixel}.
+\end{keybox}
+
+\begin{exbox}{the redundancy is enormous}
+On a $100\times100$ image, classifying every pixel by its own patch means
+\[
+100\times 100 = 10{,}000 \text{ independent CNN forward passes per image.}
+\]
+At $5$\,ms per pass that is $50$\,s for a single small image --- and almost all
+of that work is wasted, because the patch around pixel $(50,50)$ and the patch
+around its neighbour $(50,51)$ overlap in all but one column, so their early
+convolutional features are nearly identical. The fix, exactly as for detection,
+is to compute the shared convolutional features \emph{once} for the whole image.
+\end{exbox}
+
+\section{Second idea: fully convolutional network}
+
+The cure for the redundancy is to drop the per-pixel cropping entirely and make
+the network \textbf{fully convolutional}: a stack of convolution layers that
+turns the whole image into the whole label map in one pass.
+
+\begin{defbox}{Fully convolutional network (FCN)}
+Feed the input image ($3\times H\times W$) through a stack of convolutions that
+preserve spatial size, ending in a layer with $C$ output channels. This
+produces a \textbf{score tensor} of shape $C\times H\times W$: at every pixel, a
+$C$-vector of class scores. A per-pixel $\argmax$ over the $C$ channels yields
+the final \textbf{prediction map} of shape $H\times W$.
+\end{defbox}
+
+\begin{keybox}
+\textbf{Why this beats the sliding window.} Because convolution is applied to
+the whole image at once, overlapping receptive fields automatically
+\emph{share} their computation --- the feature at each location is computed
+exactly once. One forward pass labels \emph{all} pixels, instead of one pass per
+pixel. (This is the segmentation counterpart of Fast R-CNN's ``run the convnet
+once on the whole image'' insight from Chapter~27.)
+\end{keybox}
+
+\begin{keybox}
+\textbf{New problem: full-resolution convolutions are very expensive.} Keeping
+the feature maps at the original $H\times W$ through \emph{every} layer means
+every convolution operates on $H\times W$ spatial positions with $D$ channels.
+The cost and memory of a conv layer scale with $H\times W\times D$, so a deep
+stack at full resolution is prohibitive. We need to shrink the spatial size
+inside the network --- but the output must still come back out at full
+resolution.
+\end{keybox}
+
+\begin{exbox}{cost of staying at full resolution}
+One $3\times3$ convolution mapping $D_{\text{in}}$ channels to $D_{\text{out}}$
+channels over an $H\times W$ map costs about
+\[
+H \times W \times D_{\text{in}} \times D_{\text{out}} \times 3 \times 3
+\text{ multiply--adds.}
+\]
+For $H=W=512$, $D_{\text{in}}=D_{\text{out}}=64$:
+\[
+512\times512\times64\times64\times9 \approx 9.7\times10^{10}
+\approx 97 \text{ billion operations --- for a \emph{single} layer.}
+\]
+Halving the resolution to $256\times256$ divides the spatial term by $4$,
+cutting this one layer to $\sim24$ billion. With a deep stack of such layers the
+saving compounds, which is exactly why we downsample inside the network.
+\end{exbox}
+
+\section{The encoder--decoder shape: downsample, then upsample}
+
+The resolution dilemma is resolved by designing the network as a bunch of
+convolutional layers with \textbf{downsampling} and \textbf{upsampling}
+\emph{inside} the network.
+
+\begin{defbox}{Downsample--upsample design}
+\textbf{First half (encoder / downsampling):} progressively \emph{reduce}
+spatial resolution (e.g.\ $H\times W \to H/2\times W/2 \to H/4\times W/4$) while
+typically \emph{increasing} channel depth. Expensive convolutions thus run on
+small feature maps. This compresses the image into a low-resolution, semantically
+rich representation.
+
+\medskip
+\textbf{Second half (decoder / upsampling):} progressively \emph{increase} the
+resolution back up to the original $H\times W$, so the final prediction map has
+the same size as the input.
+\end{defbox}
+
+\begin{keybox}
+\textbf{Where the cost goes.} The heaviest convolutions now act at low
+resolution (e.g.\ $H/4\times W/4$), where each layer touches $16\times$ fewer
+spatial positions than at full size. The network still \emph{outputs} a full
+$H\times W$ map because the decoder restores the resolution. This leaves one
+question, the engine of the next two sections: \textbf{how do we upsample?}
+\end{keybox}
+
+\subsection{Downsampling: the tools we already have}
+
+Downsampling is the familiar part --- we have two standard mechanisms.
+
+\begin{defbox}{Two ways to downsample}
+\textbf{Pooling} (max or average): slide a small window (e.g.\ $2\times2$) and
+replace it by a single number --- its maximum (\emph{max pooling}) or its mean
+(\emph{average pooling}). \textbf{No parameters} are learned here. Pooling buys
+some \emph{local invariance}, at the price of \emph{discarding information}.
+
+\medskip
+\textbf{Strided convolution:} a convolution that hops by a stride $>1$, so its
+output map is smaller than its input. Unlike pooling this \emph{does} have
+learnable weights.
+\end{defbox}
+
+\begin{exbox}{max vs.\ average pooling on a $2\times2$ block}
+Take the top-left $2\times2$ block of the slide's grid,
+\[
+\begin{bmatrix} 2 & 1 \\ 5 & 0 \end{bmatrix}.
+\]
+\emph{Max} pooling returns $\max(2,1,5,0)=5$. \emph{Average} pooling returns
+$\tfrac{2+1+5+0}{4}=\tfrac{8}{4}=2.0$. Max pooling keeps the strongest
+activation (good for ``did this feature fire \emph{anywhere} in the block?''),
+while average pooling smooths. Either way a $2\times2$ block becomes one number,
+so an $H\times W$ map shrinks to $\tfrac{H}{2}\times\tfrac{W}{2}$, and
+\emph{three of the four original values are gone} --- the information loss the
+decoder must somehow undo.
+\end{exbox}
+
+\section{Upsampling I: unpooling}
+
+The simplest upsamplers are \emph{fixed} (no learning): they just spread small
+maps into larger ones by a rule.
+
+\begin{defbox}{Three fixed unpooling rules}
+Mapping a $2\times2$ input to a $4\times4$ output:
+\begin{itemize}
+\item \textbf{Nearest neighbour:} copy each input value into its whole
+$2\times2$ output cell (replicate).
+\item \textbf{``Bed of nails'':} place each input value in \emph{one} fixed
+position (say the top-left) of its $2\times2$ cell, and fill the other three
+with $0$.
+\item \textbf{Max unpooling:} like bed-of-nails, but put each value back at the
+\emph{exact position} from which the corresponding max-pool earlier took its
+maximum. This requires \textbf{remembering the argmax positions} from the paired
+pooling layer.
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}{the three rules on the same input}
+Let the $2\times2$ input be
+$\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}$.
+
+\emph{Nearest neighbour} replicates each entry into a $2\times2$ block:
+\[
+\begin{bmatrix}
+1 & 1 & 2 & 2 \\
+1 & 1 & 2 & 2 \\
+3 & 3 & 4 & 4 \\
+3 & 3 & 4 & 4
+\end{bmatrix}.
+\]
+
+\emph{Bed of nails} (value at top-left of each cell, zeros elsewhere):
+\[
+\begin{bmatrix}
+1 & 0 & 2 & 0 \\
+0 & 0 & 0 & 0 \\
+3 & 0 & 4 & 0 \\
+0 & 0 & 0 & 0
+\end{bmatrix}.
+\]
+Both are pure rules with nothing learned.
+\end{exbox}
+
+\begin{keybox}
+\textbf{Why max unpooling is the clever one.} Max pooling threw away \emph{where}
+the maximum was; if we record that location, max unpooling can drop the value
+back \emph{exactly} where it came from, restoring spatial precision at object
+boundaries. This is why the architecture is drawn with \textbf{corresponding
+pairs of downsampling and upsampling layers}: each unpooling layer is wired to
+its matching pooling layer to reuse the stored argmax positions. It is the same
+``don't lose the location'' concern that motivated RoI~\emph{Align} over RoI
+pooling in Chapter~27.
+\end{keybox}
+
+\begin{exbox}{max pooling then max unpooling, end to end}
+Max-pool the $4\times4$ map (with $2\times2$ windows, stride $2$)
+\[
+\begin{bmatrix}
+1 & 2 & 6 & 3 \\
+3 & 5 & 2 & 1 \\
+1 & 2 & 2 & 1 \\
+7 & 3 & 4 & 8
+\end{bmatrix}.
+\]
+Per quadrant the maxima are: top-left $\max(1,2,3,5)=5$ (at row~2, col~2);
+top-right $\max(6,3,2,1)=6$ (row~1, col~3); bottom-left $\max(1,2,7,3)=7$
+(row~4, col~1); bottom-right $\max(2,1,4,8)=8$ (row~4, col~4). So pooling gives
+$\begin{bmatrix}5&6\\7&8\end{bmatrix}$ and \emph{records} those four positions.
+After the rest of the network returns a $2\times2$ map --- say
+$\begin{bmatrix}1&2\\3&4\end{bmatrix}$ --- max unpooling writes each value back
+to its stored slot:
+\[
+\begin{bmatrix}
+0 & 0 & 2 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 \\
+3 & 0 & 0 & 4
+\end{bmatrix}.
+\]
+The non-zero entries land precisely where the original maxima were --- spatial
+detail recovered for free.
+\end{exbox}
+
+\section{Upsampling II: transposed convolution (learnable)}
+
+Unpooling rules are fixed. To \emph{learn} how to upsample, we use a
+\textbf{transposed convolution} (also called fractionally-strided or, loosely,
+``deconvolution''). The slides build it from the relationship between ordinary
+convolution and its reverse.
+
+\subsection{The set-up: ordinary convolution as the forward map}
+
+\begin{defbox}{The forward (downsampling) convolution}
+The slides start from a $4\times4$ image convolved with a $3\times3$ filter,
+producing a $2\times2$ output. Each output number is the dot product of the
+filter with one $3\times3$ patch of the input. Going \emph{forward}, many input
+pixels collapse to one output pixel. Transposed convolution does the
+\textbf{opposite}: it expands \emph{one} input pixel into a whole output patch.
+\end{defbox}
+
+\subsection{The mechanism: one output map per input pixel, then overlap-add}
+
+\begin{defbox}{Transposed convolution}
+For \emph{each} pixel value $v$ of the small input, multiply the \emph{whole
+filter} by $v$ and \textbf{paste} the resulting scaled-filter patch into the
+large output, positioned according to that pixel's location (stepping by the
+stride). Different input pixels produce patches that \textbf{overlap}; wherever
+they overlap, \textbf{sum} the contributions. The accumulated map is the
+upsampled output.
+\end{defbox}
+
+\begin{keybox}
+\textbf{``One output map for each pixel.''} Each input pixel $v$ generates its
+own copy of the filter scaled by $v$ (so input value $55$ with filter entry $2$
+contributes $110$, etc.). These per-pixel maps are laid down at shifted
+positions and \emph{added} where they overlap. Because the filter weights are
+\textbf{learnable}, the network \emph{learns how to upsample} rather than being
+stuck with a fixed rule --- the slides stress: ``values are different! transpose
+convolution kernels are learnable (training).''
+\end{keybox}
+
+\begin{exbox}{a 1-D transposed convolution worked out}
+Take input vector $[2,\,3]$ and a learnable filter $[1,\,2,\,1]$, output
+stride~$1$ (so consecutive input pixels are placed one step apart).
+
+\emph{Pixel $2$} generates $2\times[1,2,1]=[2,4,2]$, placed at offset $0$:
+\[
+[\,2,\;4,\;2,\;0\,].
+\]
+\emph{Pixel $3$} generates $3\times[1,2,1]=[3,6,3]$, placed at offset $1$:
+\[
+[\,0,\;3,\;6,\;3\,].
+\]
+Overlap-add the two:
+\[
+[\,2,\;4+3,\;2+6,\;3\,] = [\,2,\;7,\;8,\;3\,].
+\]
+Two input values became four output values, with the overlap region ($7,8$)
+mixing contributions from both --- the 1-D analogue of the slides' 2-D
+overlap-and-sum, and the values change as the filter is trained.
+\end{exbox}
+
+\section{A basic architecture: the U-Net}
+
+We can now assemble the pieces (encoder downsampling, decoder upsampling) into a
+concrete, hugely influential network.
+
+\begin{defbox}{U-Net}
+\textbf{U-Net} (Ronneberger, Fischer \& Brox, 2015) is an
+\textbf{encoder--decoder} network originally built for \textbf{biomedical image
+segmentation}. The left arm (\emph{contracting path}) repeatedly applies
+$3\times3$ convolutions $+$ ReLU and $2\times2$ max pooling, halving resolution
+and doubling channels. The right arm (\emph{expanding path}) repeatedly applies
+$2\times2$ up-convolutions (transposed convolution) to restore resolution, and a
+final $1\times1$ convolution maps the feature channels to the $C$ class scores.
+Drawn out, the contract-then-expand shape forms the letter ``U''.
+\end{defbox}
+
+\begin{keybox}
+\textbf{The key ingredient: skip connections (``copy and crop'').} At each
+resolution level, U-Net \emph{copies} the encoder's feature map and concatenates
+it onto the matching decoder feature map. The decoder thus sees \emph{both} the
+coarse, semantically rich features brought up from below \emph{and} the fine,
+high-resolution detail carried across from the encoder. Downsampling discards
+spatial precision (Section~6); the skip connections hand that precision directly
+to the decoder, which is what lets U-Net produce crisp boundaries. This is the
+same ``route the lost detail around the bottleneck'' idea as max-unpooling's
+stored positions, generalised to whole feature maps. U-Net won the ISBI~2015
+cell-tracking and dental-radiography caries challenges.
+\end{keybox}
+
+\begin{exbox}{tracking the resolution down and back up}
+The original U-Net takes a $572\times572$ tile. The contracting path roughly
+halves the spatial size at each of four pooling steps:
+\[
+572 \to 284 \to 140 \to 68 \to 32 \;\;(\text{approx., before each pool}),
+\]
+while channels grow $1\to 64\to 128\to 256\to 512\to 1024$. The expanding path
+then doubles the size back up four times via up-convolutions
+($32\to 64\to 104\to 200\to 392$, approx.), with channels shrinking
+$1024\to512\to256\to128\to64$, ending in a $1\times1$ conv to $C=2$ classes and
+a $388\times388$ output map. Resolution is \emph{lost} on the way down (cheap,
+deep convolutions) and \emph{rebuilt} on the way up, with skip connections
+restoring the detail that pooling discarded.
+\end{exbox}
+
+\section{U-Net variants}
+
+Several widely used architectures keep U-Net's encoder--decoder skeleton and
+change one ingredient.
+
+\begin{defbox}{Three U-Net variants}
+\textbf{LinkNet:} an encoder--decoder built on a \textbf{ResNet} backbone (e.g.\
+ResNet-34). Its skip connections use \textbf{summation} rather than
+concatenation, and each \emph{decoder block} is a small
+$\text{conv}1\times1 \to \text{transposed conv} \to \text{conv}1\times1$ unit
+(with batch-norm). Summation keeps the decoder lightweight (no growth in channel
+count from concatenation), making LinkNet efficient.
+
+\medskip
+\textbf{PSPNet (Pyramid Scene Parsing Network):} after a CNN produces the
+feature map, a \textbf{pyramid pooling module} pools it at \emph{several
+different region sizes} (coarse to fine) in parallel, processes each with a
+convolution, \emph{upsamples} them all back to a common size, and
+\emph{concatenates} them. This fuses \textbf{local and global context}, which is
+why PSPNet outperformed the prior state of the art on segmentation in 2017.
+
+\medskip
+\textbf{FPN (Feature Pyramid Network):} combines a \textbf{bottom-up} pathway (a
+normal CNN whose resolution \emph{decreases} and whose \emph{semantic value
+increases} as you go up) with a \textbf{top-down} pathway that propagates the
+strong high-level semantics back down to the high-resolution layers, predicting
+at \emph{multiple} scales.
+\end{defbox}
+
+\begin{keybox}
+\textbf{The unifying theme.} Every variant is fighting the same tension
+introduced in Section~6: deep features are \emph{semantically strong but
+spatially coarse}, shallow features are \emph{spatially precise but semantically
+weak}. Concatenation skips (U-Net), summation skips (LinkNet), multi-scale
+pooling (PSPNet) and the top-down pathway (FPN) are four different ways to
+\textbf{fuse} coarse semantics with fine spatial detail. They differ in
+\emph{how} they merge, not in \emph{why}.
+\end{keybox}
+
+\begin{exbox}{why multi-scale context helps (PSPNet)}
+A single car pixel in a street scene is ambiguous from a tiny neighbourhood --- a
+patch of dark pixels could be car, road, or shadow. Pooling the feature map at a
+\emph{coarse} level (say a single $1\times1$ summary of the whole map) injects
+the global hint ``this is a street scene''; pooling at a \emph{finer} level
+(e.g.\ a $3\times3$ grid) preserves ``this blob is car-shaped here''. PSPNet
+pools at several such levels at once --- e.g.\ grids of $1\times1$, $2\times2$,
+$3\times3$, $6\times6$ --- upsamples each back to the feature-map size, and
+concatenates. The per-pixel classifier then sees its local evidence \emph{and}
+nested summaries of ever-larger surroundings, resolving the ambiguity.
+\end{exbox}
+
+\section{A regression cousin: monocular depth estimation}
+
+The same dense-prediction machinery solves a problem that is \emph{not}
+classification at all. Where semantic segmentation outputs a \emph{class} per
+pixel, \textbf{monocular depth estimation} outputs a \emph{real number} per
+pixel --- it is the \textbf{regression} version of dense prediction, just as
+the localisation head of Chapter~27 was the regression version of a
+classification head.
+
+\begin{defbox}{Monocular depth estimation}
+Given a \textbf{single} (monocular) RGB image, estimate the \textbf{depth
+value} --- the distance relative to the camera --- of \emph{each} pixel. The
+output is a \textbf{depth map} of shape $H\times W$ of continuous values, rather
+than a categorical label map. ``Monocular'' is what makes it hard: with one
+image there is no stereo disparity to triangulate from, so depth must be
+inferred from monocular cues (perspective, texture gradients, known object
+sizes, occlusion).
+\end{defbox}
+
+\begin{keybox}
+\textbf{Two families of methods, and the data bottleneck.} State-of-the-art
+approaches either \emph{(i)} design one powerful network that \textbf{directly
+regresses} the whole depth map, or \emph{(ii)} \textbf{split the input into bins
+or windows} to cut computational cost. The recurring practical obstacle is a
+\textbf{lack of ground-truth datasets for supervised training}: dense
+per-pixel depth labels require special sensors (LiDAR, structured light) and are
+far scarcer and noisier than the segmentation masks a human can simply paint ---
+which pushes the field toward synthetic data and self-/temporally-supervised
+training.
+\end{keybox}
+
+\begin{exbox}{classification vs.\ regression output, side by side}
+For a $100\times100$ image:
+\begin{itemize}
+\item \textbf{Semantic segmentation} predicts a $C\times100\times100$ score
+tensor, then $\argmax$ over the $C$ classes $\Rightarrow$ a $100\times100$ map
+of \emph{discrete labels}, trained with a per-pixel \emph{cross-entropy} loss.
+\item \textbf{Depth estimation} predicts a single $1\times100\times100$ map of
+\emph{continuous} distances (e.g.\ metres), trained with a per-pixel
+\emph{regression} loss such as L2, $\sum_{p}(\hat d_p - d_p)^2$ over the
+$10{,}000$ pixels.
+\end{itemize}
+The architecture (encoder--decoder, skip connections) is essentially the same;
+only the final layer and the loss change --- $C$-way softmax for segmentation
+versus a single regressed value for depth.
+\end{exbox}
+
+\paragraph{An example system: M4Depth.} As a concrete instance, M4Depth (Fonder,
+Ernst \& Van Droogenbroeck, 2022) tackles \emph{temporal} monocular depth in
+unstructured environments. It is an encoder--decoder operating on a \emph{video
+sequence}: an encoder extracts multi-scale features $f_{\text{enc}}^{1,2,3}$
+from each frame, and a decoder of stacked ``parallax refiner'' stages, fed with
+the camera motion $(\mathbf{R}_t,\mathbf{t}_t)$ between frames, infers
+\textbf{parallax} (apparent pixel shift due to motion) and converts it
+$\rho\!\to\! d$ into a depth map per frame. It illustrates the section's two
+points at once: it reuses the segmentation-style encoder--decoder skeleton, and
+it sidesteps the ground-truth-data bottleneck by exploiting \emph{motion across
+frames} as an extra cue rather than relying solely on static supervised labels.
+
+\section*{Closing remark}
+
+This chapter pushed the Chapter~25 spectrum to its dense-prediction extreme.
+Classical segmentation cut images by low-level homogeneity \emph{without}
+meaning; semantic segmentation attaches a \emph{class} to every pixel; and the
+machinery to do it efficiently --- fully convolutional networks, the
+encoder--decoder downsample/upsample shape, learnable transposed-convolution
+upsampling, and skip connections --- recurs, with only the output head swapped,
+in the regression cousin of depth estimation. The throughline from Chapter~27
+holds: each architectural step exists to remove the bottleneck (redundant
+computation, then full-resolution cost, then lost spatial detail) left by the
+one before it.
+
 \end{document}
