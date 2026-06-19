@@ -226,3 +226,12 @@ __marimo__/
 Final Project/CinderConesDataPack/
 Final Project/CinderConesDataPack.zip
 
+
+# LaTeX build artifacts
+*.aux
+*.synctex.gz
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+Final Project/Latex/build.log

@@ -23,3 +23,5 @@ Final Project/
 - `Consegna.md` — testo della consegna
 - `cinder_cones.pdf` — descrizione del problema e del dataset
 - `Project-Ideas.md` — analisi dello stato dei dati e spunti di progetto
+- `Metodologia.md` — pilastri obbligatori della relazione (assunzioni, obiettivo, preprocessing osservando i dati, dimensionalità passo-passo)
+- `Project-Steps.md` — piano di implementazione passo-passo (implementa → testa → collega alle slide); contributo distintivo = separazione coni annidati/adiacenti
