@@ -213,4 +213,33 @@ wheels} in aspect; the only confounder is the coastal cliff, as steep as a crate
 is why Step~3 combines slope with roughness rather than thresholding slope alone. These three
 channels, together with the texture rendering, are the input of the detection steps.
 
+\subsection{Step 2 --- Synthetic hillshade from steerable filters}
+Rather than rely on the supplied Eduard NE/NW renders, we \emph{synthesise} the hillshade from
+any light azimuth ourselves, using \textbf{steerable first-derivative-of-Gaussian filters}
+(deck \texttt{01\_image\_processing}, p.22). The DEM is filtered \emph{once} along $x$ and $y$
+to obtain the two basis responses $G_1^{0^\circ}$ and $G_1^{90^\circ}$; the derivative along
+an arbitrary direction $\theta$ is then a cheap linear combination, with no re-filtering:
+\begin{equation}
+G_1^{\theta} = \cos\theta\,G_1^{0^\circ} + \sin\theta\,G_1^{90^\circ}.
+\end{equation}
+The shading lit from azimuth $\theta$ is the directional derivative along the light (bright
+where the surface rises toward it)\footnote{Tested: with the raw directional derivative the
+synthetic shading comes out inverted relative to the Eduard render (correlation $-0.81$), as
+our light-direction convention is opposite to theirs; negating it ($s=-d$) flips the sign to
+$+0.81$.}. With $\sigma=2$ px ($\approx 10$\,m) the synthetic NE
+hillshade reproduces the supplied Eduard NE render with a correlation of $0.81$
+(Figure~\ref{fig:steer}), and rotating $\theta$ swings the illumination coherently
+(NE\,/\,NW\,/\,SE panels). This yields a CV-grounded, self-produced multi-direction shading we
+fully control --- unlike the two fixed renders --- from only two precomputed filters.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_steerable.png}
+\caption{Synthetic hillshade on El Hierro from the steerable $G_1$ filters. Top: synthetic NE
+($45^\circ$) next to the supplied Eduard NE render (correlation $0.81$). Bottom: the same
+basis re-steered to NW ($315^\circ$) and SE ($135^\circ$), showing the illumination rotating
+coherently.}
+\label{fig:steer}
+\end{figure}
+
 \end{document}
