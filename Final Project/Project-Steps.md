@@ -16,30 +16,35 @@
 
 ---
 
-### Step 0 — Caricamento e ispezione DEM
+### Step 0 — Caricamento e ispezione DEM  ✅ FATTO
 - **Fai:** apri i 3 DEM con `rasterio`; stampa `shape (H,W)`, `dtype`, risoluzione, nodata→NaN.
 - **Formula/slide:** nessuna. Il DEM è una *range image* → `04_3Dvision_small` p.3.
 - **Test:** risoluzioni = 2 / 5 / 10 m; nessun crash; quote in metri plausibili.
 
-### Step 1 — Canali morfometrici: slope, aspect, roughness
+### Step 1 — Canali morfometrici: slope, aspect, roughness  ✅ FATTO
 - **Fai:** gradiente Sobel → **slope** = `deg(arctan√(gx²+gy²))`, **aspect** = `arctan2(gy,gx)`,
   **roughness** = dev. standard locale (finestra k×k). Carica anche il canale **texture** Eduard.
 - **Formula/slide:** gradiente `M=√(gx²+gy²)`, `θ=arctan(gy/gx)` → `01_image_processing` **p.13**.
-- **Test:** slope alto (25–35°) sui fianchi; aspect radiale attorno ai coni.
+- **Esito reale:** slope bordi **mediana 18.8°** vs sfondo **8.1°** (NON 25–35°); aspect radiale.
 
-### Step 2 — Hillshade sintetico con filtri orientabili  ➕ *(contributo: rappresentazione)*
+### Step 2 — Hillshade sintetico con filtri orientabili  ➕ ✅ FATTO *(contributo: rappresentazione)*
 - **Fai:** derivate di gaussiana `G₁⁰`,`G₁⁹⁰`; per ogni θ combina
   `G₁^θ = cosθ·G₁⁰ + sinθ·G₁⁹⁰` → hillshade da qualsiasi direzione di luce (generato da te, non
   i render NE/NW forniti).
 - **Scopo:** rappresentazione CV-fondata e tua → smarca da Frattini; risponde al 1° obiettivo
   del PDF.
 - **Formula/slide:** filtri orientabili `G₁^θ=cosθ·G₁⁰+sinθ·G₁⁹⁰` → `01_image_processing` **p.22**.
-- **Test:** l'hillshade θ=NE somiglia al render Eduard NE; ruotando θ l'ombra ruota coerente.
+- **Esito reale:** σ=2px; sintetico NE **correla 0.81** col render Eduard NE; NE/NW/SE ruotano
+  coerenti. (Segno invertito vs Eduard → shading = −derivata direzionale.) Fig `fig_steerable.png`.
 
-### Step 3 — Maschera morfometrica
-- **Fai:** maschera binaria `slope∈[25°,35°]` AND `roughness < soglia` (soglia da percentile).
-- **Formula/slide:** thresholding → `09_segmentation` **p.13**; (Otsu p.15-18 come alternativa).
-- **Test:** la maschera copre i fianchi dei coni noti.
+### Step 3 — Maschera morfometrica  ✅ FATTO (data-driven)
+- **Fai:** maschera binaria = `slope > T` con **T scelto da Otsu** (non a mano) sul DEM ElHierro.
+- **Esito reale:** Otsu = **17.6°** (≈ rim misurato 18.8°) → tiene **31%** dell'isola ma copre
+  **96%** dei coni (recall per-cono: ≥10% del disco del cono è ripido). Piano fisso `[25,35°]`
+  dava recall solo **21%** → scartato; AND con `roughness` non aggiunge nulla → tolto.
+- **Limite noto:** la scogliera costiera (ripida) sopravvive → la scarterà il classificatore (Step 7).
+- **Formula/slide:** thresholding + **Otsu** (between-class variance) → `09_segmentation` **p.13-18**.
+- **Test:** ✔ maschera selettiva (31% isola) ma alta recall sui coni (96%). Fig `fig_mask.png`.
 
 ### Step 4 — Candidati LoG (baseline che mostra il problema)
 - **Fai:** `blob_log` sul texture mascherato, config ad alto recall → candidati `(row,col,σ)`.

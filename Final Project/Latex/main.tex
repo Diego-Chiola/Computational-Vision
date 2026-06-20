@@ -242,4 +242,28 @@ coherently.}
 \label{fig:steer}
 \end{figure}
 
+\subsection{Step 3 --- Data-driven morphometric mask}
+To shrink the search area for the blob detector (Step~4) we keep only the \textbf{steep
+terrain} where cones live, with a binary mask obtained by \textbf{thresholding the slope}
+(deck \texttt{09\_segmentation}, p.13--18). The threshold is not hand-picked: \textbf{Otsu's
+method} selects the global optimum that best separates the slope histogram into \emph{flat}
+and \emph{steep} (maximising the between-class variance). Notably it lands at $17.6^\circ$,
+right on the rim slope measured in Step~1 ($18.8^\circ$), confirming the cut is meaningful.
+The original plan used a fixed band $[25^\circ,35^\circ]$, but on the real data that misses
+most rims (rim-recall $21\%$), which is exactly why we switched to a data-driven threshold; a
+roughness AND-term was also tested but gave no gain, since cone rims are already both steep and
+rough. The resulting mask keeps only $31\%$ of the island yet covers $96\%$ of the cones (a
+cone counts as covered when steep terrain fills at least $10\%$ of its disk), so it is a cheap,
+high-recall pre-filter (Figure~\ref{fig:mask}). Its one blind spot is the coastal cliff, which
+is steep and therefore survives the mask; it will be rejected later by the classifier (Step~7).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_mask.png}
+\caption{Data-driven morphometric mask on El Hierro. (1) Otsu threshold on the slope histogram
+($17.6^\circ$); (2) the resulting binary mask, keeping $31\%$ of the island; (3) the mask (red)
+over the synthetic NE hillshade; (4) a zoom showing the mask wrapping a single cone flank.}
+\label{fig:mask}
+\end{figure}
+
 \end{document}
