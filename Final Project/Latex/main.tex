@@ -37,19 +37,21 @@ summarises the three DEMs after loading.
 
 In Table~\ref{tab:dems}, $H\times W$ is the raster size in pixels (matrix rows
 $\times$ columns), Mpx the total number of pixels in millions ($H\cdot W$, a proxy
-for the memory footprint), Res. the ground size of one pixel in metres, dtype the
-numeric type of the elevation values, and $z_{\max}$ the maximum elevation
-(sanity check against the real volcano).
+for the memory footprint), NaN\% the share of pixels that were \emph{nodata} and
+got mapped to \texttt{NaN} (terrain outside the raster/island, ignored by every
+later step), Res. the ground size of one pixel in metres, dtype the numeric type of
+the elevation values, and $z_{\max}$ the maximum elevation (sanity check against the
+real volcano).
 
 \begin{table}[h]
 \centering
-\begin{tabular}{l r r c c r}
+\begin{tabular}{l r r r c c r}
 \hline
-Dataset & Size (H$\times$W) & Mpx & Res. (m) & dtype & $z_{\max}$ (m)\\
+Dataset & Size (H$\times$W) & Mpx & NaN\% & Res. (m) & dtype & $z_{\max}$ (m)\\
 \hline
-El Hierro & $5081\times5681$ & 28.9 & 5 & float32 & 1499.8\\
-Etna      & $27756\times25717$ & 713.8 & 2 & float32 & 3324.1\\
-Jeju      & $4364\times7761$ & 33.9 & 10 & float32 & 1945.0\\
+El Hierro & $5081\times5681$ & 28.9 & 40\% & 5 & float32 & 1499.8\\
+Etna      & $27756\times25717$ & 713.8 & 25\% & 2 & float32 & 3324.1\\
+Jeju      & $4364\times7761$ & 33.9 & 27\% & 10 & float32 & 1945.0\\
 \hline
 \end{tabular}
 \caption{DEM inspection. Maximum elevations match the real volcanoes
@@ -143,6 +145,18 @@ aspect ratio and the always-present azimuth identify Id$=3$ as fissures.}
 \label{tab:labels}
 \end{table}
 
+\paragraph{Observation --- what these data fix for the pipeline.}
+The geometry tests turn the three labels into three decisions. (i) The \textbf{crater}
+(Id$=2$) is the detection target: it is the only label present on \emph{every} cone ($196$),
+and since its outlines are open we represent each crater by its \textbf{centroid and
+equivalent radius} rather than by the polygon. (ii) The \textbf{base} (Id$=1$) encloses the
+crater in $98\%$ of cones --- this containment is exactly the nested configuration our
+contribution must preserve, and it gives a free sanity check on a detection. (iii) The
+\textbf{fissure} (Id$=3$), a short segment with a real azimuth, is not a target but feeds the
+qualitative cone--fissure alignment of the bonus step. Finally, the labels are
+\emph{not} equinumerous ($151$ base / $196$ crater / $171$ fissure): annotations are
+incomplete, so the whole pipeline is anchored on the complete crater set.
+
 \subsection{Step 0.6 --- Quick data analysis}
 Three cheap measurements on El Hierro parameterise the later steps rather than guessing
 their constants. (i) The three Eduard renderings share the DEM grid exactly (same
@@ -164,6 +178,16 @@ the median radius, and the cones below it are the adjacent/nested cases.}
 \label{fig:stats}
 \end{figure}
 
+\paragraph{Observation --- what these three checks fix.}
+Put together, the measurements set three things at once. The \textbf{alignment} lets every
+DEM-derived channel and the supplied shadings be stacked as co-registered inputs with no
+resampling; the crater \textbf{sizes} fix the LoG search range to $20$--$174$\,m (so the
+detector looks only at these radii); and the \textbf{adjacency} count shows that only $4\%$
+of cones overlap, yet this $4\%$ is exactly the population a point-based detector merges
+into one and that the watershed step must recover. In short these numbers parameterise the
+detector (scale range), guarantee clean multi-channel inputs (alignment), and size the
+problem the contribution must solve (the $4\%$ adjacent/nested cones).
+
 \section{Detection pipeline}
 
 \subsection{Step 1 --- Morphometric channels}
@@ -174,9 +198,7 @@ $=\operatorname{atan2}(g_y,g_x)$ (the direction the slope faces), and the
 \textbf{roughness}, the local standard deviation of elevation in a $5\times5$ window.
 Figure~\ref{fig:morpho} shows them on El Hierro. As a quantitative check, the median slope
 on the crater rims is $18.8^\circ$ against $8.1^\circ$ on the background (about
-$2.3\times$ steeper), and the aspect rotates around each cone, giving the radial pattern of
-the rightmost panel. These three channels, together with the texture rendering, are the
-input of the detection steps.
+$2.3\times$ steeper), and the aspect rotates around each cone (bottom-right panel).
 
 \begin{figure}[h]
 \centering
@@ -185,5 +207,10 @@ input of the detection steps.
 plus a zoom of the aspect showing the radial pattern around a single cone.}
 \label{fig:morpho}
 \end{figure}
+
+Cones thus appear as bright \emph{rings} in slope/roughness and as radial \emph{colour
+wheels} in aspect; the only confounder is the coastal cliff, as steep as a crater rim, which
+is why Step~3 combines slope with roughness rather than thresholding slope alone. These three
+channels, together with the texture rendering, are the input of the detection steps.
 
 \end{document}
