@@ -5,6 +5,8 @@
 \usepackage{amsmath}
 \usepackage{array}
 \usepackage{graphicx}
+\usepackage{float}     % enables [H] to pin each figure exactly where it is written
+\emergencystretch=2em  % avoid text overflowing the right margin (long \texttt / inline math)
 
 \title{Automatic Detection of Scoria Cones from DEMs}
 \author{Gabriele Berruti (4791919)\\Computational Vision --- University of Genoa}
@@ -86,7 +88,7 @@ facing the light are bright and those facing away are dark (two opposite directi
 given so no slope stays in shadow); and the \textbf{texture shading}, a
 light-direction-independent rendering that emphasises fine surface detail.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_channels.png}
 \caption{El Hierro: the raw DEM (left) is visually flat, while the Eduard renderings
@@ -94,7 +96,7 @@ reveal the conical landforms.}
 \label{fig:channels}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_gt.png}
 \caption{Ground truth on El Hierro. Left: the 196 crater outlines (Id$=2$). Right: a
@@ -109,7 +111,7 @@ small craters), but pairs of \emph{large} adjacent cones whose outlines intersec
 are the configurations a point-based detector merges into one and the watershed step must
 separate.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_adjacent.png}
 \caption{The adjacent/nested cases on El Hierro: the 4 crater pairs whose outlines
@@ -169,7 +171,7 @@ closer to a neighbour than the sum of the two radii, i.e. they are adjacent or n
 This $4\%$ is precisely the population that point-based detection merges and that the
 watershed step is designed to recover.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_data_stats.png}
 \caption{El Hierro crater statistics. Left: equivalent-radius distribution, used to set
@@ -192,7 +194,7 @@ problem the contribution must solve (the $4\%$ adjacent/nested cones).
 
 \subsection{Step 1 --- Morphometric channels}
 From the single elevation band we derive three channels with the image gradient
-(deck \texttt{01\_image\_processing}, p.13): the \textbf{slope}
+(deck \texttt{01\_image\_\allowbreak processing}, p.13): the \textbf{slope}
 $=\arctan\sqrt{g_x^2+g_y^2}$ in degrees, the \textbf{aspect}
 $=\operatorname{atan2}(g_y,g_x)$ (the direction the slope faces), and the
 \textbf{roughness}, the local standard deviation of elevation in a $5\times5$ window.
@@ -200,7 +202,7 @@ Figure~\ref{fig:morpho} shows them on El Hierro. As a quantitative check, the me
 on the crater rims is $18.8^\circ$ against $8.1^\circ$ on the background (about
 $2.3\times$ steeper), and the aspect rotates around each cone (bottom-right panel).
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_morphometric.png}
 \caption{Morphometric channels derived from the El Hierro DEM: slope, aspect and roughness,
@@ -232,7 +234,7 @@ hillshade reproduces the supplied Eduard NE render with a correlation of $0.81$
 (NE\,/\,NW\,/\,SE panels). This yields a CV-grounded, self-produced multi-direction shading we
 fully control --- unlike the two fixed renders --- from only two precomputed filters.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_steerable.png}
 \caption{Synthetic hillshade on El Hierro from the steerable $G_1$ filters. Top: synthetic NE
@@ -257,13 +259,53 @@ cone counts as covered when steep terrain fills at least $10\%$ of its disk), so
 high-recall pre-filter (Figure~\ref{fig:mask}). Its one blind spot is the coastal cliff, which
 is steep and therefore survives the mask; it will be rejected later by the classifier (Step~7).
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_mask.png}
 \caption{Data-driven morphometric mask on El Hierro. (1) Otsu threshold on the slope histogram
 ($17.6^\circ$); (2) the resulting binary mask, keeping $31\%$ of the island; (3) the mask (red)
 over the synthetic NE hillshade; (4) a zoom showing the mask wrapping a single cone flank.}
 \label{fig:mask}
+\end{figure}
+
+\subsection{Step 4 --- LoG candidate detection (baseline that exposes the problem)}
+\paragraph{Terminology.} A few terms recur from here on. The \emph{ground truth} (GT) is the set of
+annotated true craters. A \emph{true positive} (TP) is a real cone correctly detected, a
+\emph{false positive} (FP) a detection matching no real cone, a \emph{false negative} (FN) a real
+cone missed. \emph{Recall} $=TP/(TP+FN)$ measures how complete the detection is (what fraction of
+real cones we find), \emph{precision} $=TP/(TP+FP)$ how clean it is (what fraction of detections are
+real). A \emph{blob} is the roughly circular spot the LoG returns at a given scale; a
+\emph{one-to-one assignment} forces one detection per cone. The \emph{Random Forest} (RF) is the
+supervised ensemble-of-trees classifier of Step~7, and the \emph{watershed} is the region-based
+segmentation of Step~5 that floods the surface from markers and separates adjacent basins.
+
+On the masked texture rendering we run the \textbf{Laplacian-of-Gaussian} blob detector
+(\texttt{skimage.\allowbreak feature.\allowbreak blob\_log}), the classic \textbf{scale-invariant} circular-feature
+detector (deck \texttt{03\_image\_matching}, p.14--16). The scales are taken from the radii
+measured in Step~0.6 ($20$--$174$\,m) and the configuration is kept \emph{deliberately
+permissive} (low threshold) to maximise recall: this is a high-recall candidate pool, not the
+final detector. Against the $196$ ground-truth craters (200\,m matching tolerance) it yields
+$22{,}065$ candidates with \textbf{recall $0.964$} ($189/196$, the $7$ misses being small or
+eroded cones) and \textbf{precision $0.009$}. The recall reproduces the reference notebook
+exactly; the thousands of false positives are expected at this stage and will be removed by the
+Random Forest of Step~7.
+
+The decisive observation concerns the adjacent cones. Under the lenient \emph{any-candidate}
+rule both members of a crowded pair count as found, but a real detector must output \textbf{one
+detection per cone}. Enforcing a one-to-one assignment, only $186/196$ cones keep a unique
+detection: \textbf{$10$ cones} (the reference reports $11$) are lost because neighbours compete
+for the same candidate blobs (Figure~\ref{fig:log}, right). Point-based blob detection cannot
+separate them --- this is precisely the $\approx$\,$5\%$ gap that the watershed of Step~5 is
+built to close.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_log.png}
+\caption{Step~4 on El Hierro. Left: density of the $22{,}065$ permissive LoG candidates over the
+hillshade (recall $0.96$, precision $0.009$); the pool concentrates on steep terrain but is
+dominated by false positives. Right: zoom on an adjacent cone pair (cyan) surrounded by dozens of
+overlapping candidates, where no clean one-detection-per-cone assignment exists.}
+\label{fig:log}
 \end{figure}
 
 \end{document}

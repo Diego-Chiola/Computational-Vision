@@ -46,10 +46,16 @@
 - **Formula/slide:** thresholding + **Otsu** (between-class variance) → `09_segmentation` **p.13-18**.
 - **Test:** ✔ maschera selettiva (31% isola) ma alta recall sui coni (96%). Fig `fig_mask.png`.
 
-### Step 4 — Candidati LoG (baseline che mostra il problema)
-- **Fai:** `blob_log` sul texture mascherato, config ad alto recall → candidati `(row,col,σ)`.
+### Step 4 — Candidati LoG (baseline che mostra il problema)  ✅ FATTO
+- **Fai:** `skimage.feature.blob_log` sul **texture mascherato** (DS×2, `min_sigma=1.5,
+  max_sigma=12, num_sigma=6, threshold=0.08, overlap=0.3`); candidati = blob col centro in maschera.
+- **Esito reale (=Frattini):** 22.065 candidati, **recall 0.964** (189/196, 7 persi piccoli/erosi),
+  **precision 0.009** (migliaia di FP → li pulisce la RF, Step 7). Il **gap di adiacenza**: con
+  assegnamento **one-to-one** solo 186/196 hanno una rilevazione unica → **10 coni persi** (Frattini: 11)
+  perché coni vicini competono per gli stessi blob. Fig `fig_log.png`.
 - **Formula/slide:** **LoG = blob detector scale-invariant** → `03_image_matching` **p.14-16**.
-- **Test:** recall ≈ 0.96 sui crateri; **osserva che due crateri vicini = 1 solo blob**.
+- **Test:** ✔ recall ≈ 0.96 (come riferimento); il merge NON appare a alta-recall ma sotto one-to-one
+  (gap 10 ≈ 11) → motiva il watershed (Step 5).
 
 ### Step 5 — Watershed: separa coni ADIACENTI  *(cuore del contributo)*
 - **Fai:** crateri = depressioni → marcatori sui minimi locali → **watershed** → 1 bacino per
