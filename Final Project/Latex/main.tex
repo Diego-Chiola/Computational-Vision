@@ -415,6 +415,24 @@ The one pair still merged is a \emph{tightly nested} case --- centroids only $\a
 apart, one cone on the other's flank, with no topographic saddle between them --- which is handed
 to the multi-scale LoG of Step~6.
 
+\paragraph{Approaches tried and discarded.} A few variants were tested before settling on the
+method above.
+
+Restricting the watershed to the steep mask alone fails: each crater centroid lies on the flat
+crater floor, \emph{outside} the steep ring, so only $\approx$\,$55/196$ cones land in any basin
+--- hence we segment the whole island.
+
+Detecting the markers with \texttt{peak\_local\_max} (label-constrained) stalls on the $7$\,Mpx
+island, so the summits are found with a vectorised \texttt{maximum\_filter} test instead.
+
+Using the \emph{raw} elevation for the markers misses cones on the volcano's regional slope (they
+are not local maxima of absolute height): only $0$--$2$ of the $4$ adjacent pairs separate, which
+is what the Difference-of-Gaussians detrend fixes.
+
+Filtering the markers by prominence (\texttt{h\_maxima}) to cut their number re-merges close cones,
+because the saddle between them is shallow --- so we keep plain local maxima and accept the
+over-segmentation, pruned later by the Random Forest exactly as for the LoG pool.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_watershed.png}
