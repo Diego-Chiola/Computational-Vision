@@ -6,6 +6,7 @@
 \usepackage{array}
 \usepackage{graphicx}
 \usepackage{float}     % enables [H] to pin each figure exactly where it is written
+\usepackage{parskip}   % blank line between paragraphs, no first-line indent (notebook-like reading)
 \emergencystretch=2em  % avoid text overflowing the right margin (long \texttt / inline math)
 
 \title{Automatic Detection of Scoria Cones from DEMs}
@@ -17,12 +18,14 @@
 
 \section{Introduction}
 This project detects \emph{scoria cones} from single-channel Digital Elevation
-Models (DEMs), where each pixel encodes a terrain elevation in metres. The core
-contribution is the \textbf{separation of nested or adjacent cones}: point-based
-blob detectors collapse two overlapping craters into a single response, and a
-one-to-one matching then discards one of the two. We address this with a
-watershed segmentation of the crater depressions, which natively splits adjacent
-catchment basins.
+Models (DEMs), where each pixel encodes a terrain elevation in metres.
+
+The core contribution is the \textbf{separation of nested or adjacent cones}:
+point-based blob detectors collapse two overlapping craters into a single
+response, and a one-to-one matching then discards one of the two.
+
+We address this with a watershed segmentation of the crater depressions, which
+natively splits adjacent catchment basins.
 
 We work on three datasets: \textbf{El Hierro} (5\,m resolution, with ground-truth
 annotations, used for development and validation), \textbf{Etna} (2\,m, noisier
@@ -32,10 +35,12 @@ used for qualitative and unsupervised analysis).
 \section{Data and preprocessing}
 
 \subsection{Step 0 --- DEM loading and inspection}
-A DEM is a \emph{range image}: a single elevation band. Each dataset uses a
-different \emph{nodata} sentinel, which we convert to \texttt{NaN} so that all
-later computations ignore invalid pixels naturally. Table~\ref{tab:dems}
-summarises the three DEMs after loading.
+A DEM is a \emph{range image}: a single elevation band.
+
+Each dataset uses a different \emph{nodata} sentinel, which we convert to
+\texttt{NaN} so that all later computations ignore invalid pixels naturally.
+
+Table~\ref{tab:dems} summarises the three DEMs after loading.
 
 In Table~\ref{tab:dems}, $H\times W$ is the raster size in pixels (matrix rows
 $\times$ columns), Mpx the total number of pixels in millions ($H\cdot W$, a proxy
@@ -64,29 +69,40 @@ $\approx$1.95\,km), confirming correct loading.}
 
 Three facts drive the following steps: (i) Etna is $\approx$714\,Mpx
 ($\approx$2.86\,GB as float32), so it must be processed in \emph{tiles} rather
-than loaded whole; (ii) the three \emph{nodata} conventions differ
-($-3.4\times10^{38}$, $-9999$, \texttt{NaN}) and are all mapped to \texttt{NaN};
+than loaded whole;
+
+(ii) the three \emph{nodata} conventions differ ($-3.4\times10^{38}$, $-9999$,
+\texttt{NaN}) and are all mapped to \texttt{NaN};
+
 (iii) each dataset has its own UTM coordinate reference system, so any shapefile
 must be reprojected into the CRS of its DEM before use.
 
 \subsection{Step 0.5 --- Visual inspection}
-Before deriving any channel we inspect the data on El Hierro. Figure~\ref{fig:channels}
-shows that the raw DEM looks visually flat, whereas the Eduard renderings (NE/NW shading
-and texture shading) reveal the cones; this motivates the derived channels of Step~1.
+Before deriving any channel we inspect the data on El Hierro.
+
+Figure~\ref{fig:channels} shows that the raw DEM looks visually flat, whereas the Eduard
+renderings (NE/NW shading and texture shading) reveal the cones; this motivates the derived
+channels of Step~1.
+
 Figure~\ref{fig:gt} shows the $196$ crater outlines of the ground truth: the two closest
 craters lie only $25$\,m apart (5 pixels) and several cones are adjacent or nested.
+
 Point-based blob detectors merge such pairs into a single detection --- separating them
 is the goal of the watershed step.
 
 For clarity, the panels in Figure~\ref{fig:channels} are: the \textbf{raw DEM}, i.e. the
 original elevation grid where each pixel is a terrain height in metres (it looks flat
-because a cone is only tens of metres tall relative to the whole island); the
-\textbf{Eduard renderings}, relief-shaded views produced by the \emph{Eduard}
-relief-shading tool and shipped with the dataset; the \textbf{NE/NW shading} (hillshade),
-where the terrain is lit by a simulated sun from the North-East/North-West so that slopes
-facing the light are bright and those facing away are dark (two opposite directions are
-given so no slope stays in shadow); and the \textbf{texture shading}, a
-light-direction-independent rendering that emphasises fine surface detail.
+because a cone is only tens of metres tall relative to the whole island);
+
+the \textbf{Eduard renderings}, relief-shaded views produced by the \emph{Eduard}
+relief-shading tool and shipped with the dataset;
+
+the \textbf{NE/NW shading} (hillshade), where the terrain is lit by a simulated sun from
+the North-East/North-West so that slopes facing the light are bright and those facing away
+are dark (two opposite directions are given so no slope stays in shadow);
+
+and the \textbf{texture shading}, a light-direction-independent rendering that emphasises
+fine surface detail.
 
 \begin{figure}[H]
 \centering
@@ -105,11 +121,14 @@ zoom on the closest pair of crater centroids ($25$\,m apart).}
 \end{figure}
 
 Figure~\ref{fig:adjacent} isolates the cones that actually \emph{overlap}, i.e. whose
-nearest neighbour is closer than the sum of the two radii. These are $8$ craters in $4$
-pairs; note that they are not the single closest centroids of Figure~\ref{fig:gt} (two
-small craters), but pairs of \emph{large} adjacent cones whose outlines intersect. These
-are the configurations a point-based detector merges into one and the watershed step must
-separate.
+nearest neighbour is closer than the sum of the two radii.
+
+These are $8$ craters in $4$ pairs; note that they are not the single closest centroids of
+Figure~\ref{fig:gt} (two small craters), but pairs of \emph{large} adjacent cones whose
+outlines intersect.
+
+These are the configurations a point-based detector merges into one and the watershed step
+must separate.
 
 \begin{figure}[H]
 \centering
@@ -121,15 +140,21 @@ overlap (8 craters). The watershed step is designed to split exactly these.}
 
 \paragraph{Ground-truth quality and label semantics.}
 The El Hierro shapefile is \emph{dirty} and mixes three feature types in a single file.
+
 The crater outlines (Id$=2$) are open polylines: $191$ of $196$ do not close (median
-start--end gap $40$\,m, up to $556$\,m) and some have as few as $2$ vertices. We therefore
-use crater \emph{centroids} (plus an approximate radius) rather than the exact outline
-shape. A geometry test then characterises the three labels (Table~\ref{tab:labels}):
-Id$=1$ is the cone \textbf{base} (large, round, and enclosing the crater in $98\%$ of
-cones), Id$=2$ the \textbf{crater} rim, and Id$=3$ a \textbf{fissure} --- a short, strongly
-elongated segment that always carries a non-zero azimuth in the \texttt{Prj\_Az} field.
-The \texttt{pericolosi} field is a hazard level ($0/1/2$). We adopt Id$=2$ as the detection
-target.
+start--end gap $40$\,m, up to $556$\,m) and some have as few as $2$ vertices.
+
+We therefore use crater \emph{centroids} (plus an approximate radius) rather than the exact
+outline shape.
+
+A geometry test then characterises the three labels (Table~\ref{tab:labels}): Id$=1$ is the
+cone \textbf{base} (large, round, and enclosing the crater in $98\%$ of cones), Id$=2$ the
+\textbf{crater} rim, and Id$=3$ a \textbf{fissure} --- a short, strongly elongated segment
+that always carries a non-zero azimuth in the \texttt{Prj\_Az} field.
+
+The \texttt{pericolosi} field is a hazard level ($0/1/2$).
+
+We adopt Id$=2$ as the detection target.
 
 \begin{table}[h]
 \centering
@@ -148,26 +173,37 @@ aspect ratio and the always-present azimuth identify Id$=3$ as fissures.}
 \end{table}
 
 \paragraph{Observation --- what these data fix for the pipeline.}
-The geometry tests turn the three labels into three decisions. (i) The \textbf{crater}
-(Id$=2$) is the detection target: it is the only label present on \emph{every} cone ($196$),
-and since its outlines are open we represent each crater by its \textbf{centroid and
-equivalent radius} rather than by the polygon. (ii) The \textbf{base} (Id$=1$) encloses the
-crater in $98\%$ of cones --- this containment is exactly the nested configuration our
-contribution must preserve, and it gives a free sanity check on a detection. (iii) The
-\textbf{fissure} (Id$=3$), a short segment with a real azimuth, is not a target but feeds the
-qualitative cone--fissure alignment of the bonus step. Finally, the labels are
-\emph{not} equinumerous ($151$ base / $196$ crater / $171$ fissure): annotations are
-incomplete, so the whole pipeline is anchored on the complete crater set.
+The geometry tests turn the three labels into three decisions.
+
+(i) The \textbf{crater} (Id$=2$) is the detection target: it is the only label present on
+\emph{every} cone ($196$), and since its outlines are open we represent each crater by its
+\textbf{centroid and equivalent radius} rather than by the polygon.
+
+(ii) The \textbf{base} (Id$=1$) encloses the crater in $98\%$ of cones --- this containment
+is exactly the nested configuration our contribution must preserve, and it gives a free
+sanity check on a detection.
+
+(iii) The \textbf{fissure} (Id$=3$), a short segment with a real azimuth, is not a target
+but feeds the qualitative cone--fissure alignment of the bonus step.
+
+Finally, the labels are \emph{not} equinumerous ($151$ base / $196$ crater / $171$ fissure):
+annotations are incomplete, so the whole pipeline is anchored on the complete crater set.
 
 \subsection{Step 0.6 --- Quick data analysis}
 Three cheap measurements on El Hierro parameterise the later steps rather than guessing
-their constants. (i) The three Eduard renderings share the DEM grid exactly (same
-$5081\times5681$ shape and transform), so overlays are pixel-exact. (ii) The equivalent
-radius of the crater outlines (Figure~\ref{fig:stats}, left) has median $71$\,m and a
-5th--95th percentile range of $20$--$174$\,m, which we adopt as the LoG detector scale
-range. (iii) The nearest-neighbour distance between craters (Figure~\ref{fig:stats},
-right) has median $418$\,m but a minimum of $25$\,m, and $8/196$ craters ($4\%$) lie
-closer to a neighbour than the sum of the two radii, i.e. they are adjacent or nested.
+their constants.
+
+(i) The three Eduard renderings share the DEM grid exactly (same $5081\times5681$ shape and
+transform), so overlays are pixel-exact.
+
+(ii) The equivalent radius of the crater outlines (Figure~\ref{fig:stats}, left) has median
+$71$\,m and a 5th--95th percentile range of $20$--$174$\,m, which we adopt as the LoG
+detector scale range.
+
+(iii) The nearest-neighbour distance between craters (Figure~\ref{fig:stats}, right) has
+median $418$\,m but a minimum of $25$\,m, and $8/196$ craters ($4\%$) lie closer to a
+neighbour than the sum of the two radii, i.e. they are adjacent or nested.
+
 This $4\%$ is precisely the population that point-based detection merges and that the
 watershed step is designed to recover.
 
@@ -181,14 +217,18 @@ the median radius, and the cones below it are the adjacent/nested cases.}
 \end{figure}
 
 \paragraph{Observation --- what these three checks fix.}
-Put together, the measurements set three things at once. The \textbf{alignment} lets every
-DEM-derived channel and the supplied shadings be stacked as co-registered inputs with no
-resampling; the crater \textbf{sizes} fix the LoG search range to $20$--$174$\,m (so the
-detector looks only at these radii); and the \textbf{adjacency} count shows that only $4\%$
-of cones overlap, yet this $4\%$ is exactly the population a point-based detector merges
-into one and that the watershed step must recover. In short these numbers parameterise the
-detector (scale range), guarantee clean multi-channel inputs (alignment), and size the
-problem the contribution must solve (the $4\%$ adjacent/nested cones).
+Put together, the measurements set three things at once.
+
+The \textbf{alignment} lets every DEM-derived channel and the supplied shadings be stacked
+as co-registered inputs with no resampling; the crater \textbf{sizes} fix the LoG search
+range to $20$--$174$\,m (so the detector looks only at these radii); and the
+\textbf{adjacency} count shows that only $4\%$ of cones overlap, yet this $4\%$ is exactly
+the population a point-based detector merges into one and that the watershed step must
+recover.
+
+In short these numbers parameterise the detector (scale range), guarantee clean
+multi-channel inputs (alignment), and size the problem the contribution must solve (the
+$4\%$ adjacent/nested cones).
 
 \section{Detection pipeline}
 
@@ -198,9 +238,12 @@ From the single elevation band we derive three channels with the image gradient
 $=\arctan\sqrt{g_x^2+g_y^2}$ in degrees, the \textbf{aspect}
 $=\operatorname{atan2}(g_y,g_x)$ (the direction the slope faces), and the
 \textbf{roughness}, the local standard deviation of elevation in a $5\times5$ window.
-Figure~\ref{fig:morpho} shows them on El Hierro. As a quantitative check, the median slope
-on the crater rims is $18.8^\circ$ against $8.1^\circ$ on the background (about
-$2.3\times$ steeper), and the aspect rotates around each cone (bottom-right panel).
+
+Figure~\ref{fig:morpho} shows them on El Hierro.
+
+As a quantitative check, the median slope on the crater rims is $18.8^\circ$ against
+$8.1^\circ$ on the background (about $2.3\times$ steeper), and the aspect rotates around
+each cone (bottom-right panel).
 
 \begin{figure}[H]
 \centering
@@ -212,15 +255,19 @@ plus a zoom of the aspect showing the radial pattern around a single cone.}
 
 Cones thus appear as bright \emph{rings} in slope/roughness and as radial \emph{colour
 wheels} in aspect; the only confounder is the coastal cliff, as steep as a crater rim, which
-is why Step~3 combines slope with roughness rather than thresholding slope alone. These three
-channels, together with the texture rendering, are the input of the detection steps.
+is why Step~3 combines slope with roughness rather than thresholding slope alone.
+
+These three channels, together with the texture rendering, are the input of the detection
+steps.
 
 \subsection{Step 2 --- Synthetic hillshade from steerable filters}
 Rather than rely on the supplied Eduard NE/NW renders, we \emph{synthesise} the hillshade from
 any light azimuth ourselves, using \textbf{steerable first-derivative-of-Gaussian filters}
-(deck \texttt{01\_image\_processing}, p.22). The DEM is filtered \emph{once} along $x$ and $y$
-to obtain the two basis responses $G_1^{0^\circ}$ and $G_1^{90^\circ}$; the derivative along
-an arbitrary direction $\theta$ is then a cheap linear combination, with no re-filtering:
+(deck \texttt{01\_image\_processing}, p.22).
+
+The DEM is filtered \emph{once} along $x$ and $y$ to obtain the two basis responses
+$G_1^{0^\circ}$ and $G_1^{90^\circ}$; the derivative along an arbitrary direction $\theta$ is
+then a cheap linear combination, with no re-filtering:
 \begin{equation}
 G_1^{\theta} = \cos\theta\,G_1^{0^\circ} + \sin\theta\,G_1^{90^\circ}.
 \end{equation}
@@ -228,11 +275,14 @@ The shading lit from azimuth $\theta$ is the directional derivative along the li
 where the surface rises toward it)\footnote{Tested: with the raw directional derivative the
 synthetic shading comes out inverted relative to the Eduard render (correlation $-0.81$), as
 our light-direction convention is opposite to theirs; negating it ($s=-d$) flips the sign to
-$+0.81$.}. With $\sigma=2$ px ($\approx 10$\,m) the synthetic NE
-hillshade reproduces the supplied Eduard NE render with a correlation of $0.81$
-(Figure~\ref{fig:steer}), and rotating $\theta$ swings the illumination coherently
-(NE\,/\,NW\,/\,SE panels). This yields a CV-grounded, self-produced multi-direction shading we
-fully control --- unlike the two fixed renders --- from only two precomputed filters.
+$+0.81$.}.
+
+With $\sigma=2$ px ($\approx 10$\,m) the synthetic NE hillshade reproduces the supplied Eduard
+NE render with a correlation of $0.81$ (Figure~\ref{fig:steer}), and rotating $\theta$ swings
+the illumination coherently (NE\,/\,NW\,/\,SE panels).
+
+This yields a CV-grounded, self-produced multi-direction shading we fully control --- unlike
+the two fixed renders --- from only two precomputed filters.
 
 \begin{figure}[H]
 \centering
@@ -247,17 +297,26 @@ coherently.}
 \subsection{Step 3 --- Data-driven morphometric mask}
 To shrink the search area for the blob detector (Step~4) we keep only the \textbf{steep
 terrain} where cones live, with a binary mask obtained by \textbf{thresholding the slope}
-(deck \texttt{09\_segmentation}, p.13--18). The threshold is not hand-picked: \textbf{Otsu's
-method} selects the global optimum that best separates the slope histogram into \emph{flat}
-and \emph{steep} (maximising the between-class variance). Notably it lands at $17.6^\circ$,
-right on the rim slope measured in Step~1 ($18.8^\circ$), confirming the cut is meaningful.
+(deck \texttt{09\_segmentation}, p.13--18).
+
+The threshold is not hand-picked: \textbf{Otsu's method} selects the global optimum that best
+separates the slope histogram into \emph{flat} and \emph{steep} (maximising the between-class
+variance).
+
+Notably it lands at $17.6^\circ$, right on the rim slope measured in Step~1 ($18.8^\circ$),
+confirming the cut is meaningful.
+
 The original plan used a fixed band $[25^\circ,35^\circ]$, but on the real data that misses
 most rims (rim-recall $21\%$), which is exactly why we switched to a data-driven threshold; a
 roughness AND-term was also tested but gave no gain, since cone rims are already both steep and
-rough. The resulting mask keeps only $31\%$ of the island yet covers $96\%$ of the cones (a
-cone counts as covered when steep terrain fills at least $10\%$ of its disk), so it is a cheap,
-high-recall pre-filter (Figure~\ref{fig:mask}). Its one blind spot is the coastal cliff, which
-is steep and therefore survives the mask; it will be rejected later by the classifier (Step~7).
+rough.
+
+The resulting mask keeps only $31\%$ of the island yet covers $96\%$ of the cones (a cone
+counts as covered when steep terrain fills at least $10\%$ of its disk), so it is a cheap,
+high-recall pre-filter (Figure~\ref{fig:mask}).
+
+Its one blind spot is the coastal cliff, which is steep and therefore survives the mask; it
+will be rejected later by the classifier (Step~7).
 
 \begin{figure}[H]
 \centering
@@ -269,34 +328,49 @@ over the synthetic NE hillshade; (4) a zoom showing the mask wrapping a single c
 \end{figure}
 
 \subsection{Step 4 --- LoG candidate detection (baseline that exposes the problem)}
-\paragraph{Terminology.} A few terms recur from here on. The \emph{ground truth} (GT) is the set of
-annotated true craters. A \emph{true positive} (TP) is a real cone correctly detected, a
-\emph{false positive} (FP) a detection matching no real cone, a \emph{false negative} (FN) a real
-cone missed. \emph{Recall} $=TP/(TP+FN)$ measures how complete the detection is (what fraction of
-real cones we find), \emph{precision} $=TP/(TP+FP)$ how clean it is (what fraction of detections are
-real). A \emph{blob} is the roughly circular spot the LoG returns at a given scale; a
-\emph{one-to-one assignment} forces one detection per cone. The \emph{Random Forest} (RF) is the
-supervised ensemble-of-trees classifier of Step~7, and the \emph{watershed} is the region-based
-segmentation of Step~5 that floods the surface from markers and separates adjacent basins.
+\paragraph{Terminology.} A few terms recur from here on.
+
+The \emph{ground truth} (GT) is the set of annotated true craters.
+
+A \emph{true positive} (TP) is a real cone correctly detected, a \emph{false positive} (FP) a
+detection matching no real cone, a \emph{false negative} (FN) a real cone missed.
+
+\emph{Recall} $=TP/(TP+FN)$ measures how complete the detection is (what fraction of real cones
+we find), \emph{precision} $=TP/(TP+FP)$ how clean it is (what fraction of detections are real).
+
+A \emph{blob} is the roughly circular spot the LoG returns at a given scale; a
+\emph{one-to-one assignment} forces one detection per cone.
+
+The \emph{Random Forest} (RF) is the supervised ensemble-of-trees classifier of Step~7, and the
+\emph{watershed} is the region-based segmentation of Step~5 that floods the surface from markers
+and separates adjacent basins.
 
 On the masked texture rendering we run the \textbf{Laplacian-of-Gaussian} blob detector
 (\texttt{skimage.\allowbreak feature.\allowbreak blob\_log}), the classic \textbf{scale-invariant} circular-feature
-detector (deck \texttt{03\_image\_matching}, p.14--16). The scales are taken from the radii
-measured in Step~0.6 ($20$--$174$\,m) and the configuration is kept \emph{deliberately
-permissive} (low threshold) to maximise recall: this is a high-recall candidate pool, not the
-final detector. Against the $196$ ground-truth craters (200\,m matching tolerance) it yields
-$22{,}065$ candidates with \textbf{recall $0.964$} ($189/196$, the $7$ misses being small or
-eroded cones) and \textbf{precision $0.009$}. The recall reproduces the reference notebook
-exactly; the thousands of false positives are expected at this stage and will be removed by the
-Random Forest of Step~7.
+detector (deck \texttt{03\_image\_matching}, p.14--16).
 
-The decisive observation concerns the adjacent cones. Under the lenient \emph{any-candidate}
-rule both members of a crowded pair count as found, but a real detector must output \textbf{one
-detection per cone}. Enforcing a one-to-one assignment, only $186/196$ cones keep a unique
-detection: \textbf{$10$ cones} (the reference reports $11$) are lost because neighbours compete
-for the same candidate blobs (Figure~\ref{fig:log}, right). Point-based blob detection cannot
-separate them --- this is precisely the $\approx$\,$5\%$ gap that the watershed of Step~5 is
-built to close.
+The scales are taken from the radii measured in Step~0.6 ($20$--$174$\,m) and the configuration
+is kept \emph{deliberately permissive} (low threshold) to maximise recall: this is a high-recall
+candidate pool, not the final detector.
+
+Against the $196$ ground-truth craters (200\,m matching tolerance) it yields $22{,}065$
+candidates with \textbf{recall $0.964$} ($189/196$, the $7$ misses being small or eroded cones)
+and \textbf{precision $0.009$}.
+
+The recall reproduces the reference notebook exactly; the thousands of false positives are
+expected at this stage and will be removed by the Random Forest of Step~7.
+
+The decisive observation concerns the adjacent cones.
+
+Under the lenient \emph{any-candidate} rule both members of a crowded pair count as found, but a
+real detector must output \textbf{one detection per cone}.
+
+Enforcing a one-to-one assignment, only $186/196$ cones keep a unique detection: \textbf{$10$
+cones} (the reference reports $11$) are lost because neighbours compete for the same candidate
+blobs (Figure~\ref{fig:log}, right).
+
+Point-based blob detection cannot separate them --- this is precisely the $\approx$\,$5\%$ gap
+that the watershed of Step~5 is built to close.
 
 \begin{figure}[H]
 \centering
@@ -306,6 +380,49 @@ hillshade (recall $0.96$, precision $0.009$); the pool concentrates on steep ter
 dominated by false positives. Right: zoom on an adjacent cone pair (cyan) surrounded by dozens of
 overlapping candidates, where no clean one-detection-per-cone assignment exists.}
 \label{fig:log}
+\end{figure}
+
+\subsection{Step 5 --- Watershed: separating adjacent cones (core contribution)}
+The LoG baseline finds the cones, but a point-based detector cannot split two cones that share a
+candidate: once a \emph{one-to-one assignment} is enforced, crowded neighbours compete for the same
+blobs and $10$ cones are lost.
+
+We therefore switch to a \textbf{region-based} view.
+
+The \textbf{watershed} transform floods the inverted relief from a set of markers and traces a
+boundary wherever two basins meet (deck \texttt{09\_segmentation}, p.8; \texttt{SLIC\_Superpixels},
+p.4), turning the detection into a per-region assignment.
+
+The DEM is first \textbf{detrended} with a Difference-of-Gaussians high-pass, so that a small cone
+sitting on the volcano's regional slope still becomes a local bump --- otherwise only cones near
+the top of the island would be local maxima of absolute elevation.
+
+The \textbf{markers} are the significant local maxima of the detrended relief (the cone summits),
+kept only inside the steep-terrain neighbourhood of the Step~3 mask; the watershed then assigns
+\textbf{one basin per summit}, so two adjacent cones separated by a saddle fall into two different
+basins.
+
+Like the LoG pool, the watershed \emph{over-segments} --- it produces $\approx$\,$4{,}400$ basins,
+mostly non-cone micro-relief --- because separation, not precision, is the goal here; the Random
+Forest of Step~7 prunes the basins exactly as it prunes the LoG candidates.
+
+What matters is the adjacency test: of the $10$ cones the one-to-one LoG rule lost, \textbf{$8$}
+now sit in a basin separate from the neighbour they were competing with, and \textbf{$3$ of the
+$4$} ground-truth adjacent pairs are split into distinct basins (Figure~\ref{fig:watershed},
+right).
+
+The one pair still merged is a \emph{tightly nested} case --- centroids only $\approx$\,$10$ px
+apart, one cone on the other's flank, with no topographic saddle between them --- which is handed
+to the multi-scale LoG of Step~6.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_watershed.png}
+\caption{Step~5 on El Hierro. Left: the marker-controlled watershed partitions the island into
+basins, one per detected summit (it over-segments, as expected). Right: zoom on an adjacent cone
+pair (cyan) that the LoG baseline merged into a single detection; the watershed draws a boundary
+along the saddle (yellow) and assigns each crater its own basin.}
+\label{fig:watershed}
 \end{figure}
 
 \end{document}

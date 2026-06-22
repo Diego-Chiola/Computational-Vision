@@ -57,12 +57,20 @@
 - **Test:** ✔ recall ≈ 0.96 (come riferimento); il merge NON appare a alta-recall ma sotto one-to-one
   (gap 10 ≈ 11) → motiva il watershed (Step 5).
 
-### Step 5 — Watershed: separa coni ADIACENTI  *(cuore del contributo)*
-- **Fai:** crateri = depressioni → marcatori sui minimi locali → **watershed** → 1 bacino per
-  cratere, anche se affiancati (marker-controlled, per evitare over-segmentation).
+### Step 5 — Watershed: separa coni ADIACENTI  ✅ FATTO *(cuore del contributo)*
+- **Fai:** DEM **detrendato** (high-pass DoG: `gauss σ=1.5 − gauss σ=15` su DS×2, così un cono
+  piccolo su pendio regionale diventa un dosso locale) → **marker** = massimi locali significativi
+  (`maximum_filter size=5`, `detrend>2.5`) ristretti al vicinato della maschera Step 3
+  (`binary_dilation(mask, disk(3))`) → `watershed(-detrend, markers, mask=valid)` marker-controlled.
+- **Esito reale:** **4.427 bacini** (over-segmenta come il pool LoG → li pota la RF, Step 7);
+  **184/196** coni in un bacino proprio; **TEST: 3/4 coppie GT adiacenti** finiscono in bacini
+  distinti; degli **10 coni persi** dal LoG one-to-one, **8** ora hanno un bacino separato dal
+  vicino con cui competevano. La 4ª coppia è strettamente **annidata** (centroidi ~10px, niente
+  sella) → demandata allo Step 6. Fig `fig_watershed.png`.
 - **Formula/slide:** **watershed** (region-based) → `09_segmentation` **p.8**; descrizione
   "separa catchment basins" → `SLIC_Superpixels` **p.4**.
-- **Test (decisivo):** dove il LoG dava 1 blob su coni attaccati, il watershed dà **2 regioni**.
+- **Test (decisivo):** ✔ dove il LoG dava 1 blob su coni attaccati, il watershed dà **2 regioni**
+  (3/4 coppie; 8/10 coni recuperati).
 
 ### Step 6 — LoG multi-scala: separa coni ANNIDATI  ➕ *(completa il contributo)*
 - **Fai:** tieni le risposte LoG a **scale diverse** nella stessa posizione, senza fonderle tra
