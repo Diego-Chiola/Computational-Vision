@@ -443,4 +443,69 @@ along the saddle (yellow) and assigns each crater its own basin.}
 \label{fig:watershed}
 \end{figure}
 
+\subsection{Step 6 --- Multi-scale LoG: separating nested cones (optional extension)}
+\textbf{This step is optional}: the core of the contribution is the watershed of Step~5, while
+Step~6 is a lighter, parallel add-on that covers the \emph{other} way cones merge (nested by scale
+rather than adjacent in space) and can be skipped without breaking the pipeline.
+
+The watershed separates cones that are side by side, but it cannot split a \emph{nested}
+configuration: where a small cone sits inside or on the flank of a larger one there is a single
+mound and a single basin.
+
+The LoG, being a \textbf{scale-space} detector, gives the complementary handle: the small cone and
+the large one peak at \emph{different} scales $\sigma$ (deck \texttt{03\_image\_matching},
+p.14--16), so they can be told apart by size at the same location.
+
+The only change from the Step~4 baseline is the cross-scale pruning: the baseline used
+\texttt{overlap}\,$=0.3$, which removes a blob whenever it overlaps a larger one by more than
+$30\%$ --- exactly what discards the smaller, nested response --- whereas here we set
+\texttt{overlap}\,$=1.0$ so that responses at different scales are \textbf{kept, not fused}.
+
+Keeping the nested-scale responses enlarges the candidate pool ($22{,}065\to27{,}112$) and
+\textbf{halves the one-to-one adjacency gap, from $10$ to $5$ cones}: crowded cones of different
+sizes no longer collapse onto a single blob, so each keeps its own scale-specific response
+(Figure~\ref{fig:multiscale}).
+
+\paragraph{Honest caveat.} The recovered cones are a mix of genuinely nested/overlapping cases and
+cones that merely benefit from a denser pool, so the gain is real but not exclusively
+``nested''; the $5$ still lost have no separable scale and remain the hard core.
+
+A scale-aware match (forcing each blob's scale to equal the crater radius) was also tried but made
+the gap far worse, because the ground-truth radii come from the open, noisy outlines --- so we keep
+the plain assignment and let the multi-scale pool do the work.
+
+Together, Steps~5 and~6 cover the two ways neighbours merge: the \textbf{watershed} separates cones
+that are side by side (by region), the \textbf{multi-scale LoG} separates cones that differ in size
+at the same place (by scale).
+
+Both methods attack the same target --- the $10$ cones the baseline LoG one-to-one rule merges ---
+so they are directly comparable on how many of those $10$ they recover (Table~\ref{tab:sep}): the
+\textbf{watershed of Step~5 is the stronger, core method ($8/10$)}, while the optional multi-scale
+LoG of Step~6 recovers $5/10$ and also covers the nested-by-scale case.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l l c l}
+\hline
+Method & separates & recovers (of 10) & own metric\\
+\hline
+Step~5 --- watershed (by region) & adjacent cones & \textbf{8/10} & 3/4 adjacent pairs split\\
+Step~6 --- multi-scale LoG (by scale)\,$^\ast$ & nested cones & \textbf{5/10} & one-to-one gap $10\!\to\!5$\\
+\hline
+\end{tabular}
+\caption{Separating merged cones: Step~5 vs Step~6, scored on the $10$ cones the baseline LoG
+one-to-one rule loses. $^\ast$Step~6 is the optional extension.}
+\label{tab:sep}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_multiscale.png}
+\caption{Step~6 on El Hierro. Left: zoom on an overlapping cone pair (cyan); the yellow circles are
+the Step~4 baseline blobs and the red circles the extra multi-scale responses kept by
+\texttt{overlap}\,$=1.0$. Right: the strict one-detection-per-cone assignment loses $10$ cones with
+the baseline pool but only $5$ once nested scales are retained.}
+\label{fig:multiscale}
+\end{figure}
+
 \end{document}

@@ -72,13 +72,20 @@
 - **Test (decisivo):** ✔ dove il LoG dava 1 blob su coni attaccati, il watershed dà **2 regioni**
   (3/4 coppie; 8/10 coni recuperati).
 
-### Step 6 — LoG multi-scala: separa coni ANNIDATI  ➕ *(completa il contributo)*
-- **Fai:** tieni le risposte LoG a **scale diverse** nella stessa posizione, senza fonderle tra
-  scale → cratere piccolo *dentro* base grande = due σ = due rilevamenti.
-- **Scopo:** copre il caso annidato-per-scala che il watershed (adiacenti) non gestisce →
-  contributo completo: "separo adiacenti **e** annidati".
-- **Formula/slide:** selezione di scala LoG/DoG → `03_image_matching` **p.14-16**.
-- **Test:** un cono con cratere annidato dà 2 rilevamenti a σ diversi anziché 1.
+### Step 6 — LoG multi-scala: separa coni ANNIDATI  ➕ ✅ FATTO *(completa il contributo)*
+- **Fai:** `blob_log` IDENTICO allo Step 4 ma `overlap=1.0` invece di `0.3` → le risposte LoG a
+  **scale diverse** non vengono fuse/soppresse (il cratere piccolo annidato non viene scartato dal
+  blob più grande). Stesso assegnamento one-to-one (k=25, 200m) dello Step 4 per il confronto.
+- **Esito reale:** pool candidati $22.065\to27.112$; **gap one-to-one $10\to5$** (recupera 5 coni:
+  ids [7,52,64,133,153]). I 5 ancora persi non hanno scala separabile (hard core).
+- **Onestà (nel notebook+PDF):** i 5 recuperati sono un MIX (annidati veri + coni che beneficiano
+  solo del pool più denso) → guadagno reale ma non esclusivamente "annidato". SCARTATO il match
+  **scale-aware** (σ blob ≈ raggio cratere): peggiora tantissimo il gap (43-53) perché i raggi GT
+  vengono dai contorni aperti/rumorosi → si tiene l'assegnamento semplice. Il segnale a scala dei
+  crateri sul texture/DEM è debole (LoG ~σ3, niente firma di scala pulita per la coppia 150/151).
+- **Formula/slide:** selezione di scala LoG/DoG → `03_image_matching` **p.14-16**. Fig `fig_multiscale.png`.
+- **Test:** ✔ tenendo le scale annidate il gap one-to-one scende (10→5). Step 5 (regione, adiacenti)
+  + Step 6 (scala, annidati) = i due modi in cui i vicini si fondono.
 
 ### Step 7 — Classificazione cono / non-cono
 - **Fai:** poche feature per candidato (slope, roughness, texture, circolarità) →

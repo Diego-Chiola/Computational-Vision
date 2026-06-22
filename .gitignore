@@ -235,3 +235,6 @@ Final Project/CinderConesDataPack.zip
 *.fls
 *.fdb_latexmk
 Final Project/Latex/build.log
+
+# Local-only exam notes (not part of the deliverable)
+Final Project/EXAM.txt
