@@ -151,6 +151,22 @@
   Davies-Bouldin → `09_segmentation` **p.28-31**.
 - **Test:** ✔ un cluster isola la terra cono-like (6%), slope ≈ El Hierro; gli oreum emergono nel zoom.
 
+### Step 9.5 — Jeju zero-shot: RF di El Hierro applicato a Jeju  ➕ ✅ FATTO *(aggiunto per allinearsi a Frattini)*
+- **Perché:** Frattini fa lo zero-shot su Jeju (RF trasferito), io no → aggiunto per coprire anche
+  l'asse "generalizzazione del modello" tenendo il vantaggio della separazione.
+- **Fai:** stesso `rf` addestrato su El Hierro (Step 7) applicato ai candidati Jeju (costruiti col
+  metodo Step 5+6), 8 feature sui canali di Jeju, **soglia di El Hierro INVARIATA** (come Frattini
+  con 0.64).
+- **Esito reale:** 10.956 candidati Jeju; a soglia 0.10 (El Hierro) **1.891 detection → SOVRA-rileva**
+  (vs ~360 oreum letteratura). Specularmente a Frattini che a 0.64 **sotto-rilevava** (60). → **il
+  punto operativo NON si trasferisce** (probabilità calibrate su El Hierro). Ricalibrando al conteggio
+  (soglia 0.23 → 363 detection) i punti cadono sulle piane periferiche (oreum), lontano dall'Hallasan
+  → **il ranking sì si trasferisce**. Fig `fig_zeroshot.png`.
+- **Messaggio (coi due step Jeju):** la **rappresentazione generalizza** (Step 9, cluster 17.7°), la
+  **calibrazione del classificatore no** (Step 9.5) → su un'isola senza etichette l'unsupervised è la
+  via più sicura.
+- **Test:** ✔ zero-shot mostrato; conferma che serve ricalibrare/etichettare per detection precise.
+
 ### Step 10 (bonus) — Allineamento coni–fissure  ➕⭐ *(extra qualitativo, dopo la valutazione)*
 - **Fai:** sovrapporre gli azimut delle fissure (El Hierro `Id=3`, campo `Prj_Az`) ai coni
   rilevati e verificare visivamente che i coni si dispongano lungo le fissure.
@@ -181,3 +197,30 @@
 | 7 | `06_image_representations` p.2-5 | classificazione positive/negative |
 | 8 | `RCNN` p.2-6 | IoU/Jaccard, Precision/Recall/F1 |
 | 9 ➕ | `SLIC` p.5-6 · `09` p.28-31 | SLIC `Ds=d_lab+(m/S)·d_xy`, K-means + Davies-Bouldin |
+
+---
+
+## Conclusioni (dai dati ottenuti)
+
+1. **Baseline riprodotta.** Il LoG dà recall **0.964** (= riferimento Frattini) ma con assegnamento
+   one-to-one perde coni vicini → il **problema del merge** (il limite sollevato dalla prof) è reale e
+   misurabile, non un'opinione.
+2. **Il contributo funziona.** La pipeline finale (watershed + multiscala + RF) batte la baseline
+   LoG+greedy su **ogni** metrica (precision ×4.1, F1 ×3.7, IoU migliore) e soprattutto separa
+   **4/4 coppie adiacenti/annidate** vs 3/4 della baseline (adjacency gap 46→39). La separazione —
+   non la classificazione — è il valore aggiunto.
+3. **Classificatore debole-ma-reale, e onesto.** Sul pool unione 5+6 la RF ha OOF AP 0.13 (×3.6 sul
+   prior); l'ablation (7.5) mostra che un pool pulito "solo-5" ordina molto meglio (AP 0.31) ma è
+   l'unione a portare recall+separazione. Trade-off voluto: recall/separazione vs precisione, gestito
+   dal matching uno-a-molti dello Step 8. Feature top = **texture + coerenza radiale** (la firma CV del
+   cono), come da ipotesi.
+4. **Generalizzazione (Jeju, no GT): la rappresentazione sì, il modello no.** Unsupervised (Step 9) un
+   cluster isola la terra cono-like a **17.7° ≈ 18.8°** di El Hierro → le *feature* generalizzano.
+   Zero-shot (Step 9.5) il classificatore alla soglia di El Hierro **sovra-rileva** (1891 vs ~360);
+   il **ranking** si trasferisce ma il **punto operativo** no → su un'isola senza etichette
+   l'unsupervised è la via più sicura.
+5. **Vs Frattini.** Comparabili sul nucleo condiviso (stesso LoG, RF nello stesso ordine), io **avanti
+   sulla separazione** (il limite che a lui mancava), **pari sul transfer** (zero-shot aggiunto).
+   **Etna** non usata da nessuno (annotazioni sporche).
+6. **Limiti.** Precisione ancora bassa (terreno vulcanico difficile); Jeju solo qualitativo (niente
+   etichette per scorare); per detection precise cross-isola servirebbero più dati/etichette.

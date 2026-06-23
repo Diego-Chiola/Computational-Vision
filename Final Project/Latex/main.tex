@@ -661,4 +661,30 @@ $K=2$.}
 \label{fig:jeju}
 \end{figure}
 
+\subsection{Step 9.5 --- Zero-shot transfer of the El Hierro classifier}
+
+Step~9 tested the representation; this step tests the trained model.
+
+We take the Random Forest trained on El Hierro (Step~7) and apply it directly to Jeju candidates --- same features, no retraining, no Jeju labels --- the zero-shot setting, and as an honest test we first keep the El Hierro operating threshold unchanged.
+
+It does not land on the right number: the El Hierro threshold over-fires on Jeju ($\sim 1{,}900$ detections against a literature $\sim 360$ oreum).
+
+This is the mirror image of the reference project, whose model under-fired at its conservative threshold ($60$ cones); in both cases the lesson is the same --- the operating point does not transfer, because the predicted probabilities are calibrated to El Hierro's terrain, not Jeju's.
+
+What does survive is the ranking: recalibrated to the literature count (threshold $0.23$ for $\sim 360$ detections), the surviving points fall on the peripheral plains where the oreum are, away from the Hallasan massif --- the texture-plus-radial signature still orders cones above background on a new volcano.
+
+With no Jeju labels we cannot pick that threshold from data, only borrow a literature count, so this stays qualitative.
+
+Together the two Jeju steps give the full picture: the \emph{representation} generalises (Step~9), while the trained \emph{detector's calibration} does not (Step~9.5) --- which is exactly why, on a label-free island, the unsupervised route of Step~9 is the safer one.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_zeroshot.png}
+\caption{Step~9.5 on Jeju: zero-shot transfer of the El Hierro Random Forest. \emph{A:} at the unchanged
+El Hierro threshold the model over-fires ($\sim 1{,}900$ detections). \emph{B:} detections vs threshold
+--- the operating point must be recalibrated (literature $\sim 360$ in green, El Hierro threshold in red).
+\emph{C:} at the count-matched threshold the detections fall on the peripheral oreum.}
+\label{fig:zeroshot}
+\end{figure}
+
 \end{document}
