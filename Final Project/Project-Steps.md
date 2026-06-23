@@ -134,13 +134,22 @@
 - **Formula/slide:** **IoU/Jaccard** `RCNN` p.2-4, **Precision/Recall/F1** `RCNN` **p.6**.
 - **Test:** ✔ nostra > baseline su tutto; coppie difficili 4/4 vs 3/4.
 
-### Step 9 — Jeju unsupervised: SLIC + clustering  ➕ *(dataset senza ground truth)*
-- **Fai:** **SLIC** superpixel sul DEM/shading → **K-means** sui superpixel (K via
-  **Davies-Bouldin**) → regioni cono/non-cono senza etichette. Valutazione qualitativa.
-- **Scopo:** coprire Jeju (no GT) in modo unsupervised, non solo zero-shot.
-- **Formula/slide:** distanza 5D SLIC `Ds=d_lab+(m/S)·d_xy` → `SLIC_Superpixels` **p.5-6**;
-  K-means + Davies-Bouldin → `09_segmentation` **p.28-31**.
-- **Test:** i superpixel aderiscono ai bordi dei coni; i cluster isolano gli oreum dalle piane.
+### Step 9 — Jeju unsupervised: SLIC + clustering  ➕ ✅ FATTO *(dataset senza ground truth)*
+- **Domanda giusta (deciso con l'utente):** NON "il modello di El Hierro generalizza a Jeju?"
+  (zero-shot, NON misurabile senza GT) ma "**senza etichette, la stessa rappresentazione CV
+  (slope/texture/rilievo locale) fa emergere i coni come cluster?**" → prova QUALITATIVA di
+  robustezza della *rappresentazione*, non transfer del classificatore.
+- **Fai:** **SLIC** superpixel (DS×3, ~5.4k superpixel, su immagine appearance [texture,slope,rough],
+  `mask`=terra) → feature per superpixel [texture, slope, roughness, **rilievo locale DoG**] →
+  **K-means** con **K via Davies-Bouldin** (K=2..6) → cluster cono-like = max (slope+tex+relief).
+- **Esito reale:** K=2 (DB min 0.71); il cluster cono-like copre **~6% della terra**, slope media
+  **17.7°** (≈ rim El Hierro 18.8° → coerenza della rappresentazione!), rilievo locale +22.8m (veri
+  dossi). Zoom sulle piane: i blob del cluster cadono **sugli oreum**. Fig `fig_jeju.png`. Onestà
+  scritta: qualitativo (no GT da scorare); K grezzo → il cluster prende anche Hallasan/scogliera
+  (stessa confusione ripido-non-cono che la RF supervisionata toglieva, qui no).
+- **Formula/slide:** SLIC `Ds=d_lab+(m/S)·d_xy` → `SLIC_Superpixels` **p.5-6**; K-means +
+  Davies-Bouldin → `09_segmentation` **p.28-31**.
+- **Test:** ✔ un cluster isola la terra cono-like (6%), slope ≈ El Hierro; gli oreum emergono nel zoom.
 
 ### Step 10 (bonus) — Allineamento coni–fissure  ➕⭐ *(extra qualitativo, dopo la valutazione)*
 - **Fai:** sovrapporre gli azimut delle fissure (El Hierro `Id=3`, campo `Prj_Az`) ai coni

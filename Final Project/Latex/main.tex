@@ -631,4 +631,34 @@ baseline (grey) on recall, precision, F1 and IoU. \emph{B:} a touching pair (cya
 \label{fig:eval}
 \end{figure}
 
+\section{Generalisation to Jeju (unsupervised)}
+
+\subsection{Step 9 --- SLIC superpixels + clustering}
+
+Jeju has no ground truth, so the question here is not \emph{does the El Hierro classifier transfer?} --- that would be zero-shot, and with no labels we could not measure it.
+
+The question is whether, without any labels or training, the same CV representation (slope, texture, local relief) makes the cones emerge on a different volcano; this is a qualitative test of the representation, not of the trained model.
+
+We oversegment the island into SLIC superpixels (regions of homogeneous appearance), describe each by its mean morphometric features, and cluster them with K-means, choosing K by the Davies--Bouldin index --- fully unsupervised.
+
+The result is clean: the index is minimised at $K=2$ and one cluster isolates the cone-like terrain on its own, a compact $\sim 6\%$ of the island.
+
+That cluster's mean slope ($\approx 18^\circ$) lands right on the El Hierro cone-rim value ($18.8^\circ$ from Step~1), and its positive local relief confirms these are raised bumps, not just high ground: the same representation that described a cone on El Hierro groups the cones on Jeju.
+
+The zoom in Figure~\ref{fig:jeju} is the qualitative check --- on the lava plains the cluster blobs sit on the individual \emph{oreum}, Jeju's parasitic cones.
+
+The limits are honest: with no ground truth this is qualitative, not scored, and because Davies--Bouldin prefers a coarse $K$ the cone cluster also catches Hallasan's flanks and the steep coast --- the same steep-but-not-a-cone confusion the supervised classifier had to learn away, which here we cannot remove.
+
+The takeaway is a robustness statement about the features, not a transferred detector: the CV channels generalise to a new volcano, but precise detections would still require the supervised Step~7.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_jeju.png}
+\caption{Step~9 on Jeju (no ground truth). \emph{A:} the unsupervised cone-like cluster (red) over the
+NE shading, $\sim 6\%$ of the land. \emph{B:} zoom on a lava plain --- the cluster blobs land on the
+individual oreum (SLIC superpixel edges in yellow). \emph{C:} Davies--Bouldin model selection picks
+$K=2$.}
+\label{fig:jeju}
+\end{figure}
+
 \end{document}
