@@ -100,12 +100,23 @@
   **texture 0.18, coerenza radiale 0.15** ✓. A thr 0.10 il pool scende **17.296→3.264 (×5)**
   tenendo **157/196 coni (0.80)**. Fig `fig_rf.png`. (Classificatore *debole-ma-reale*, onesto
   per un problema sbilanciato al 3%.)
-- **Scelta provvisoria:** lo **Step 8 confronterà `solo Step 5` vs `Step 5+6`**; se il 6
+- **Scelta provvisoria:** la configurazione di input si decide allo **Step 7.5** (ablation); se il 6
   non aggiunge recall unica si tiene solo Step 5.
 - **SCARTATI (nel notebook+PDF):** centroidi bacino (→summit), soglia fissa 0.5 (→PR-AUC),
   split random (leakage →OOF), dedup 5px (rumoroso →12px).
 - **Formula/slide:** classificazione positive/negative → `06_image_representations` **p.2-5**.
 - **Test:** ✔ F1 ragionevole (0.225) e **texture la feature più importante**.
+
+### Step 7.5 — Ablation: `solo Step 5` vs `Step 5+6` (scelta dell'input)
+- **Fai:** rifai la classificazione (Step 7) con DUE pool di candidati — (a) **solo summit watershed**,
+  (b) **summit + blob multiscala** — e confronta a parità di metodo. Metrica focalizzata: **coni
+  unici recuperati** dal +6, **coppie annidate separate**, e **costo in falsi positivi** (precisione
+  a parità di recall). Decide la configurazione finale della pipeline.
+- **Sospetto da verificare:** il +6 recupera ~1 cono esclusivo (coppia annidata 150/151) ma porta
+  ~13k blob ridondanti → potrebbe peggiorare la precisione più di quanto aggiunga in recall. Se così,
+  si tiene **solo Step 5** (più semplice/difendibile) e lo Step 6 resta estensione già quantificata.
+- **Formula/slide:** ablation study / model selection (confronto controllato).
+- **Test:** numeri chiari su quale input vince; esito atteso = `solo Step 5` salvo guadagno netto del +6.
 
 ### Step 8 — Valutazione: prova del contributo
 - **Fai:** matching candidati↔GT con **assegnamento uno-a-molti** (non greedy 1-1); calcola
@@ -135,7 +146,8 @@
 
 ## Ordine
 `0 → 1 → 2 → 3 → 4` (preprocessing + baseline) → **`5 → 6`** (separazione = contributo) → `7`
-(classifica) → **`8`** (numeri che dimostrano la tesi) → `9` (Jeju unsupervised).
+(classifica) → `7.5` (ablation: scegli l'input) → **`8`** (numeri che dimostrano la tesi) → `9`
+(Jeju unsupervised).
 **Se diventa lungo**, taglia in quest'ordine: prima `9`, poi `6`, poi `2`.
 
 ## Mappa step → slide → formula

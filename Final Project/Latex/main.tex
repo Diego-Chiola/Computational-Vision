@@ -544,4 +544,45 @@ importances --- texture and radial aspect-coherence lead.}
 \label{fig:rf}
 \end{figure}
 
+\subsection{Step 7.5 --- Ablation: does Step 6 earn its place?}
+
+We declared Step 6 optional; this step proves it with numbers rather than asserting it.
+
+We re-run the exact Step 7 classifier on two candidate pools --- (a) Step 5 only (watershed summit markers) and (b) Step 5\,$+$\,6 (summits plus multi-scale LoG blobs) --- under identical features, de-duplication, labels and out-of-fold protocol, and compare on what the project is about: how many cones survive and how many adjacent / nested pairs end up separated, against the false-positive cost each pool carries forward (Table~\ref{tab:abl}).
+
+The ablation overturns the naive guess that Step 6 only adds the one nested pair.
+
+Adding the multi-scale LoG lifts the recall ceiling from $158$ to $183/196$ and recovers $+22$ cones net at the operating point ($135 \to 157$), several of them in adjacent / nested pairs --- including the tightly nested $150/151$ that the watershed alone could not split.
+
+On the headline metric the gap is decisive: adjacent / nested pairs separated jump from $1/4$ to $4/4$ once the multi-scale responses are in the pool.
+
+The cost is precision, not recall: the Step-5-only pool is smaller and cleaner, so its classifier \emph{ranks} better (out-of-fold AP $0.31$ vs $0.13$, kept-set precision $0.18$ vs $0.10$) --- it simply does not contain enough cones to separate.
+
+Because the contribution of this project \emph{is} the separation of merged cones, we keep \textbf{Step 5\,$+$\,6}; the extra false positives are a Step~8 concern, handled there by one-to-many matching rather than by discarding recall now.
+
+\begin{table}[H]
+\centering
+\caption{Step~7.5 ablation on El Hierro, same classifier and protocol on two candidate pools.
+The union wins recall and pair separation (the project's goal) at the price of per-candidate precision.}
+\label{tab:abl}
+\begin{tabular}{lcccccc}
+\hline
+pool & candidates & recall ceiling & OOF AP & cones kept & precision (kept) & pairs separated \\
+\hline
+Step 5 only & $4{,}258$  & $158/196$ & $0.31$ & $135/196$ & $0.18$ & $1/4$ \\
+Step 5\,$+$\,6 & $17{,}296$ & $183/196$ & $0.13$ & $157/196$ & $0.10$ & $\mathbf{4/4}$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_ablation.png}
+\caption{Step~7.5 on El Hierro. \emph{A:} goal metrics --- adding Step~6 (red) raises recall and takes
+pair separation from $1/4$ to $4/4$, while lowering the kept-set precision. \emph{B:} the Step-5-only pool
+is cleaner and ranks better (higher AP), but cannot cover the merged cones; the union is the pool that
+delivers the separation.}
+\label{fig:ablation}
+\end{figure}
+
 \end{document}
