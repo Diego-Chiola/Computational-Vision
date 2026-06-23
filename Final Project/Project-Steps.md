@@ -87,11 +87,25 @@
 - **Test:** ✔ tenendo le scale annidate il gap one-to-one scende (10→5). Step 5 (regione, adiacenti)
   + Step 6 (scala, annidati) = i due modi in cui i vicini si fondono.
 
-### Step 7 — Classificazione cono / non-cono
-- **Fai:** poche feature per candidato (slope, roughness, texture, circolarità) →
-  **Random Forest** → tieni i candidati classificati come cono.
+### Step 7 — Classificazione cono / non-cono  ✅ FATTO
+- **Input (deciso con l'utente):** candidati = **UNIONE Step 5 + Step 6**, ma in forma di PUNTI:
+  **summit markers** del watershed (cime dei coni — NON i centroidi dei bacini, che coprivano solo
+  ~48/196) + **blob multiscala** (`cand_ms`). Dedup NMS a **12px** (watershed tenuto per primo).
+  → **17.296 candidati** (WS 4.258 + LoG 13.038), soffitto di recall del pool **183/196 (0.93)**.
+- **Fai:** 8 feature per candidato (mean slope/rough/tex, **coerenza radiale dell'aspect**,
+  contrasto pendenza anello-cima, std pendenza anello, range quota, raggio) → **Random Forest**
+  (`class_weight=balanced_subsample`). Valutazione **out-of-fold** (5-fold `cross_val_predict`,
+  niente leakage spaziale). Punto operativo = soglia più alta che tiene ≥85% dei coni recuperabili.
+- **Esito reale:** **OOF AP 0.126** vs prior 0.035 (**×3.6**); best-F1 **0.225**. Top feature:
+  **texture 0.18, coerenza radiale 0.15** ✓. A thr 0.10 il pool scende **17.296→3.264 (×5)**
+  tenendo **157/196 coni (0.80)**. Fig `fig_rf.png`. (Classificatore *debole-ma-reale*, onesto
+  per un problema sbilanciato al 3%.)
+- **Scelta provvisoria:** lo **Step 8 confronterà `solo Step 5` vs `Step 5+6`**; se il 6
+  non aggiunge recall unica si tiene solo Step 5.
+- **SCARTATI (nel notebook+PDF):** centroidi bacino (→summit), soglia fissa 0.5 (→PR-AUC),
+  split random (leakage →OOF), dedup 5px (rumoroso →12px).
 - **Formula/slide:** classificazione positive/negative → `06_image_representations` **p.2-5**.
-- **Test:** F1 ragionevole; texture tra le feature più importanti.
+- **Test:** ✔ F1 ragionevole (0.225) e **texture la feature più importante**.
 
 ### Step 8 — Valutazione: prova del contributo
 - **Fai:** matching candidati↔GT con **assegnamento uno-a-molti** (non greedy 1-1); calcola

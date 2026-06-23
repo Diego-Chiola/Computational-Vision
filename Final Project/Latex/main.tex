@@ -508,4 +508,40 @@ the baseline pool but only $5$ once nested scales are retained.}
 \label{fig:multiscale}
 \end{figure}
 
+\subsection{Step 7 --- Random Forest: cone / non-cone classification}
+
+Steps~5--6 maximise recall and hand the next stage an over-segmented pool with thousands of false positives (the coastal cliff, every steep textured bump).
+
+This step is the precision stage: a Random Forest that scores each candidate cone / non-cone and prunes the pool.
+
+The candidate pool is the union we decided on, Steps~5\,$+$\,6: the watershed summit markers (cone tops, which carry the adjacent-cone separation) plus the multi-scale LoG blobs (which carry the nested-cone separation).
+
+Near-duplicates from the two sources are merged with a small $12$\,px spatial non-maximum suppression, watershed points kept first so the separation survives.
+
+Eight cheap, CV-grounded features describe each candidate: mean slope, mean roughness, mean texture, radial aspect coherence (does the downhill direction point outward on a ring? --- the morphological signature of a cone), ring-minus-top slope contrast, ring-slope spread, elevation range, and radius.
+
+A candidate is labelled positive if it falls within one crater radius (minimum $80$\,m) of a ground-truth centroid.
+
+Evaluation is out-of-fold ($5$-fold \texttt{cross\_val\_predict}): every candidate is scored by a forest that never saw it, so the numbers are not inflated by the dense, spatially-correlated pool.
+
+The union (deduplicated) gives $17{,}296$ candidates; only $3.5\%$ are cones, and the pool already caps recall at $183/196$ ($0.93$) --- the missing cones are the small / eroded ones the detector never proposed.
+
+The honest, threshold-free headline is an out-of-fold average precision of $0.126$ against a $0.035$ candidate prior, a $3.6\times$ lift: the forest ranks true cones well above the cliff and the textured noise despite the $3\%$ base rate.
+
+Texture and radial aspect-coherence are the two leading features (Gini $0.18$ and $0.15$), confirming that the CV-grounded signature --- a bright textured ring whose downhill direction points outward --- is what the classifier actually keys on.
+
+As a pipeline stage it does its job: at the chosen operating point (the highest threshold that still keeps $\geq 85\%$ of the recoverable cones) it shrinks the pool $\sim 5\times$, from $17{,}296$ to $\sim 3{,}300$ candidates, while retaining $157/196$ cones ($0.80$).
+
+Several alternatives were tried and discarded: basin centroids as the watershed candidate (the centre of mass sits far from the cone, covering only $\sim 48/196$; replaced by the summit markers, $\sim 158/196$); a fixed $0.5$ decision threshold (with a $3\%$ positive rate it predicts almost nothing, recall $\approx 0.04$; replaced by the threshold-free PR-AUC and a recall-oriented operating point); a random train/test split (the spatially-correlated pool leaks and inflates AP to $0.21$ versus the honest $0.13$; replaced by out-of-fold scoring); and a light $5$\,px de-duplication (left $\sim 29$\,k redundant candidates and depressed the AP; the stronger $12$\,px merge gives a cleaner pool).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_rf.png}
+\caption{Step~7 on El Hierro. \emph{A:} the Random Forest prunes the union pool $\sim 5\times$ (grey: all
+$17{,}296$ candidates; red: the ones kept; cyan: the $196$ ground-truth craters). \emph{B:} out-of-fold
+precision--recall curve (AP $=0.126$) well above the candidate prior ($0.035$). \emph{C:} feature
+importances --- texture and radial aspect-coherence lead.}
+\label{fig:rf}
+\end{figure}
+
 \end{document}
