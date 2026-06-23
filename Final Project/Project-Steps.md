@@ -118,12 +118,21 @@
 - **Formula/slide:** ablation study / model selection (confronto controllato).
 - **Test:** numeri chiari su quale input vince; esito atteso = `solo Step 5` salvo guadagno netto del +6.
 
-### Step 8 — Valutazione: prova del contributo
-- **Fai:** matching candidati↔GT con **assegnamento uno-a-molti** (non greedy 1-1); calcola
-  **IoU, Precision/Recall/F1**; metrica mirata = **% di coppie vicine/annidate separate**
-  (nostra pipeline vs baseline LoG+greedy).
+### Step 8 — Valutazione: prova del contributo  ✅ FATTO
+- **Fai:** sulla pipeline **scelta allo Step 7.5** (`Step 5+6` RF-potata, `kept`) vs **baseline
+  LoG+greedy** (Step 4 `cand`), a parità di regole e tolleranza (1 raggio cratere, min 80m):
+  recall (coverage), precision (detection su un cratere), F1, **IoU medio** (cerchio detection vs
+  cerchio GT), **adjacency gap** (greedy 1-1), e la metrica mirata **% coppie adiacenti/annidate
+  separate**.
+- **Esito reale:** baseline 22.065 dets, recall 0.776, **prec 0.024, F1 0.047**, IoU 0.124, gap 46,
+  **coppie 3/4**. Nostra 3.264 dets, recall 0.801, **prec 0.098 (×4.1), F1 0.174 (×3.7)**, IoU 0.164,
+  gap 39, **coppie 4/4**. → vince su OGNI metrica; il guadagno P/F1 è l'effetto RF, la separazione
+  (gap 46→39, coppie 3/4→4/4) è il contributo. Zoom su coppia adiacente: baseline 1 blob fuso,
+  nostra 2 detection distinte. Fig `fig_eval.png` + Table `tab:eval`.
+- **Nota onestà:** Step 8 usa tolleranza stretta (1 raggio), NON i 200m del diagnostico Step 4 →
+  gap assoluti più grandi qui; conta il confronto controllato (nostra vs baseline a parità di regole).
 - **Formula/slide:** **IoU/Jaccard** `RCNN` p.2-4, **Precision/Recall/F1** `RCNN` **p.6**.
-- **Test:** sulle coppie difficili recall nostra > baseline; sul resto ≈ pari.
+- **Test:** ✔ nostra > baseline su tutto; coppie difficili 4/4 vs 3/4.
 
 ### Step 9 — Jeju unsupervised: SLIC + clustering  ➕ *(dataset senza ground truth)*
 - **Fai:** **SLIC** superpixel sul DEM/shading → **K-means** sui superpixel (K via

@@ -585,4 +585,50 @@ delivers the separation.}
 \label{fig:ablation}
 \end{figure}
 
+\subsection{Step 8 --- Evaluation: proving the contribution}
+
+This is the scorecard: the chosen pipeline (Step~7.5 picked Step 5\,$+$\,6, RF-pruned) against the baseline every blob detector starts from --- LoG candidates with greedy one-to-one matching, the Frattini-style detector.
+
+Both are scored under identical rules and a single honest tolerance: a detection matches a crater if it lands within one crater radius (minimum $80$\,m).
+
+We report detection recall (craters covered), precision (detections that land on a crater), F1, the mean IoU of the matched detection disk against the ground-truth crater disk, the adjacency gap (craters lost when each gets at most one unique detection), and the targeted metric --- the share of adjacent / nested pairs that end up separated (Table~\ref{tab:eval}).
+
+The Random-Forest stage turns the near-zero-precision pool into a usable detector: precision and F1 rise about four-fold and the matched detections sit more tightly on the craters (higher mean IoU), at the same --- slightly higher --- recall.
+
+On the metric the project exists for, the separation shows: the adjacency gap shrinks ($46 \to 39$) and \emph{all} four adjacent / nested pairs are kept apart ($3/4 \to 4/4$), where the baseline merges one.
+
+The zoom in Figure~\ref{fig:eval} makes it concrete: where the baseline drops a single blob on a touching pair, our pipeline keeps a distinct detection on each cone --- the merged-cone case the whole project set out to fix.
+
+This step uses the strict one-radius tolerance, not the lenient $200$\,m of the Step~4 diagnostic, so the absolute gaps are larger here; what matters is the controlled comparison, ours versus the baseline under identical rules.
+
+\begin{table}[H]
+\centering
+\caption{Step~8 evaluation on El Hierro: the chosen pipeline versus the LoG\,$+$\,greedy baseline,
+identical rules and tolerance. The pipeline wins on every metric; the last two rows are the
+contribution (separation of merged cones).}
+\label{tab:eval}
+\begin{tabular}{lcc}
+\hline
+metric & baseline (LoG\,$+$\,greedy) & ours (Step 5\,$+$\,6 $+$ RF) \\
+\hline
+detections        & $22{,}065$ & $3{,}264$ \\
+recall            & $0.776$    & $0.801$ \\
+precision         & $0.024$    & $\mathbf{0.098}$ \\
+F1                & $0.047$    & $\mathbf{0.174}$ \\
+mean IoU          & $0.124$    & $\mathbf{0.164}$ \\
+adjacency gap     & $46$       & $\mathbf{39}$ \\
+pairs separated   & $3/4$      & $\mathbf{4/4}$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_eval.png}
+\caption{Step~8 on El Hierro. \emph{A:} detection scorecard --- the pipeline (red) beats the LoG\,$+$\,greedy
+baseline (grey) on recall, precision, F1 and IoU. \emph{B:} a touching pair (cyan): the baseline blobs
+(yellow) collapse onto one cone, while our detections (red crosses) keep one on each.}
+\label{fig:eval}
+\end{figure}
+
 \end{document}
