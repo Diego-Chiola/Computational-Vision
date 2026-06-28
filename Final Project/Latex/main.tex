@@ -388,8 +388,8 @@ Against the $196$ ground-truth craters (200\,m matching tolerance) it yields $22
 candidates with \textbf{recall $0.964$} ($189/196$, the $7$ misses being small or eroded cones)
 and \textbf{precision $0.009$}.
 
-The recall reproduces the reference notebook exactly; the thousands of false positives are
-expected at this stage and will be removed by the Random Forest of Step~7.
+The thousands of false positives are expected at this stage and will be removed by the
+Random Forest of Step~7.
 
 The decisive observation concerns the adjacent cones.
 
@@ -397,8 +397,8 @@ Under the lenient \emph{any-candidate} rule both members of a crowded pair count
 real detector must output \textbf{one detection per cone}.
 
 Enforcing a one-to-one assignment, only $186/196$ cones keep a unique detection: \textbf{$10$
-cones} (the reference reports $11$) are lost because neighbours compete for the same candidate
-blobs (Figure~\ref{fig:log}, right).
+cones} are lost because neighbours compete for the same candidate blobs
+(Figure~\ref{fig:log}, right).
 
 Point-based blob detection cannot separate them --- this is precisely the $\approx$\,$5\%$ gap
 that the watershed of Step~5 is built to close.
@@ -626,7 +626,7 @@ delivers the separation.}
 
 \subsection{Step 8 --- Evaluation: proving the contribution}
 
-This is the scorecard: the chosen pipeline (Step~7.5 picked Step 5\,$+$\,6, RF-pruned) against the baseline every blob detector starts from --- LoG candidates with greedy one-to-one matching .
+This is the scorecard: the chosen pipeline (Step~7.5 picked Step 5\,$+$\,6, RF-pruned) against the baseline every blob detector starts from --- LoG candidates with greedy one-to-one matching.
 
 Both are scored under identical rules and a single honest tolerance: a detection matches a crater if it lands within one crater radius (minimum $80$\,m).
 
@@ -711,13 +711,13 @@ Step~9 tested the representation; this step tests the trained model.
 
 We take the Random Forest trained on El Hierro (Step~7) and apply it directly to Jeju candidates --- same features, no retraining, no Jeju labels --- the zero-shot setting, and as an honest test we first keep the El Hierro operating threshold unchanged.
 
-It does not land on the right number: the El Hierro threshold over-fires on Jeju ($\sim 1{,}900$ detections against a literature $\sim 360$ oreum).
+It does not land on a plausible number: the El Hierro threshold over-fires on Jeju ($\sim 1{,}900$ detections, far more than the cone-like blobs the unsupervised Step~9 isolated on the same island).
 
-This is the mirror image of the reference project, whose model under-fired at its conservative threshold ($60$ cones); in both cases the lesson is the same --- the operating point does not transfer, because the predicted probabilities are calibrated to El Hierro's terrain, not Jeju's.
+The operating point does not transfer, because the predicted probabilities are calibrated to El Hierro's terrain, not Jeju's.
 
-What does survive is the ranking: recalibrated to the literature count (threshold $0.23$ for $\sim 360$ detections), the surviving points fall on the peripheral plains where the oreum are, away from the Hallasan massif --- the texture-plus-radial signature still orders cones above background on a new volcano.
+What does survive is the ranking: recalibrated so the detection count matches the unsupervised Step~9 estimate, the surviving points fall on the peripheral plains where the cones are, away from the Hallasan massif --- the texture-plus-radial signature still orders cones above background on a new volcano.
 
-With no Jeju labels we cannot pick that threshold from data, only borrow a literature count, so this stays qualitative.
+With no Jeju labels we cannot pick that threshold from data, only borrow the unsupervised Step~9 count, so this stays qualitative.
 
 Together the two Jeju steps give the full picture: the \emph{representation} generalises (Step~9), while the trained \emph{detector's calibration} does not (Step~9.5) --- which is exactly why, on a label-free island, the unsupervised route of Step~9 is the safer one.
 
@@ -730,8 +730,8 @@ Together the two Jeju steps give the full picture: the \emph{representation} gen
 \includegraphics[width=0.62\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_zeroshot_3.png}
 \caption{Step~9.5 on Jeju: zero-shot transfer of the El Hierro Random Forest. \emph{A:} at the unchanged
 El Hierro threshold the model over-fires ($\sim 1{,}900$ detections). \emph{B:} detections vs threshold
---- the operating point must be recalibrated (literature $\sim 360$ in green, El Hierro threshold in red).
-\emph{C:} at the count-matched threshold the detections fall on the peripheral oreum.}
+--- the operating point must be recalibrated (the unsupervised Step~9 count in green, El Hierro threshold in red).
+\emph{C:} at the count-matched threshold the detections fall on the peripheral plains.}
 \label{fig:zeroshot}
 \end{figure}
 
@@ -765,15 +765,13 @@ orientation.}
 
 \section{Conclusions}
 
-The reference weakness is real and measurable: the LoG baseline reaches $0.964$ recall but, under one-to-one matching, merges neighbouring cones --- the limitation raised at the reference exam is a number, not an opinion.
+The weakness this project targets is real and measurable: the LoG baseline reaches $0.964$ recall but, under one-to-one matching, merges neighbouring cones --- a limitation that is a number, not an opinion.
 
 The contribution resolves it: the final pipeline (watershed $+$ multi-scale $+$ Random Forest) separates all four adjacent / nested pairs, against three for the baseline, and beats the LoG\,$+$\,greedy baseline on every metric (precision $\times 4.1$, F1 $\times 3.7$, higher IoU, adjacency gap $46\to39$).
 
 The classifier itself is an honest weak-but-real signal (out-of-fold AP $\sim 3.6\times$ the candidate prior); its value is not raw precision but carrying the separation downstream, and its leading features --- texture and radial aspect-coherence --- are exactly the CV-grounded cone signature.
 
 On a second volcano without labels, the representation generalises but the trained model does not: unsupervised clustering isolates cone-like terrain at the El Hierro rim slope ($17.7^\circ \approx 18.8^\circ$), while the zero-shot classifier over-fires at the El Hierro threshold --- the ranking transfers, the operating point does not, so on label-free terrain the unsupervised route is the safer one.
-
-Against the reference project the result is comparable on the shared core, ahead on the separation it lacked, and level on cross-domain transfer.
 
 The honest limits remain: per-candidate precision is low on this morphologically complex terrain, and the Jeju analysis is qualitative for want of ground truth; precise cross-island detection would need more annotated data or a supervised step on the target.
 
