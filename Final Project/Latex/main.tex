@@ -28,10 +28,11 @@ response, and a one-to-one matching then discards one of the two.
 We address this with a watershed segmentation of the crater depressions, which
 natively splits adjacent catchment basins.
 
-We work on three datasets: \textbf{El Hierro} (5\,m resolution, with ground-truth
-annotations, used for development and validation), \textbf{Etna} (2\,m, noisier
-ground truth, used as a stress test) and \textbf{Jeju} (10\,m, no ground truth,
-used for qualitative and unsupervised analysis).
+We work on two datasets: \textbf{El Hierro} (5\,m resolution, with ground-truth
+annotations, used for development and validation) and \textbf{Jeju} (10\,m, no
+ground truth, used for qualitative and unsupervised analysis). A third DEM,
+\textbf{Etna} (2\,m), is only loaded and inspected in Step~0 (Table~\ref{tab:dems});
+it is \emph{not} used by the pipeline.
 
 \section{Data and preprocessing}
 
@@ -40,6 +41,8 @@ A DEM is a \emph{range image}: a single elevation band.
 
 Each dataset uses a different \emph{nodata} sentinel, which we convert to
 \texttt{NaN} so that all later computations ignore invalid pixels naturally.
+Those pixels are not removed: the raster keeps the same $H\times W$ grid, preserving
+alignment with renderings and vector annotations.
 
 Table~\ref{tab:dems} summarises the three DEMs after loading.
 
@@ -68,15 +71,20 @@ $\approx$1.95\,km), confirming correct loading.}
 \label{tab:dems}
 \end{table}
 
-Three facts drive the following steps: (i) Etna is $\approx$714\,Mpx
-($\approx$2.86\,GB as float32), so it must be processed in \emph{tiles} rather
-than loaded whole;
+Three facts come out of the inspection: (i) Etna is \emph{inspected only} and left
+out of the pipeline, which runs on El Hierro and Jeju;
 
 (ii) the three \emph{nodata} conventions differ ($-3.4\times10^{38}$, $-9999$,
 \texttt{NaN}) and are all mapped to \texttt{NaN};
 
 (iii) each dataset has its own UTM coordinate reference system, so any shapefile
 must be reprojected into the CRS of its DEM before use.
+
+For El Hierro, the elevation data and the annotations are therefore two separate files:
+the single-band DEM raster \texttt{DEM/dem5m/Hierro.tif} and the vector shapefile
+\texttt{Coni/Cones.shp}.
+Jeju has only the DEM raster \texttt{Dem10m/Raster Jeju 5k.tif} and the supplied
+Eduard renderings; no annotation shapefile is provided.
 
 \subsection{Step 0.5 --- Visual inspection}
 Before deriving any channel we inspect the data on El Hierro.
@@ -113,7 +121,7 @@ fine surface detail.
 \vspace{8pt}
 \includegraphics[width=0.49\textwidth]{figures/fig_channels_3.png}\hfill
 \includegraphics[width=0.49\textwidth]{figures/fig_channels_4.png}
-\caption{El Hierro: the raw DEM (top-left) is visually flat, while the Eduard renderings
+\caption{El Hierro: the raw DEM (top-left, colour bar in metres) is visually flat, while the Eduard renderings
 (NE and NW shading, top-right and bottom-left; texture shading, bottom-right) reveal the
 conical landforms.}
 \label{fig:channels}
@@ -303,6 +311,15 @@ the illumination coherently (NE\,/\,NW\,/\,SE panels).
 
 This yields a CV-grounded, self-produced multi-direction shading we fully control --- unlike
 the two fixed renders --- from only two precomputed filters.
+
+\paragraph{Role in the pipeline.} The synthetic hillshade is \emph{not} a classifier feature;
+its purpose is methodological and diagnostic. (i) It demonstrates the steerable-filter
+construction from the course on the real DEM; (ii) the $0.81$ correlation with the Eduard
+render validates the same gradient machinery that drives slope, aspect and the radial-coherence
+feature, so a single number sanity-checks all of them; and (iii) it makes relief shading
+self-produced, removing any dependence on supplied renders --- relevant on datasets that lack
+them, such as Jeju. The resulting shading is then reused as the grayscale background of every
+later figure.
 
 \begin{figure}[H]
 \centering
