@@ -167,14 +167,19 @@
   via più sicura.
 - **Test:** ✔ zero-shot mostrato; conferma che serve ricalibrare/etichettare per detection precise.
 
-### Step 10 (bonus) — Allineamento coni–fissure  ➕⭐ *(extra qualitativo, dopo la valutazione)*
-- **Fai:** sovrapporre gli azimut delle fissure (El Hierro `Id=3`, campo `Prj_Az`) ai coni
-  rilevati e verificare visivamente che i coni si dispongano lungo le fissure.
-- **Scopo:** conferma geologica del risultato ("i coni si allineano lungo le fissure", come da
-  consegna sui *linear geological patterns*) — bella slide all'orale, non parte della pipeline.
-- **Nota:** solo qualitativo; il *mining* delle direzioni (PCA/Hough) è fuori programma. Il
-  campo `pericolosi` (livello di rischio) **non** si usa: è tematico, non visivo.
-- **Test:** una frazione consistente di coni cade entro pochi gradi/metri da una fissura.
+### Step 10 (bonus) — Allineamento coni–fissure  ➕⭐ ✅ FATTO *(extra qualitativo)*
+- **Fai:** fissure El Hierro (`Id=3`, `Prj_Az`) come `unary_union` di linee; distanza di ogni
+  cono (centroide GT) dalla fissura più vicina (shapely, in metri), confronto con **null di 3000
+  punti casuali su terra**; + rosa degli azimut.
+- **Esito reale:** **91% dei coni entro 250m da una fissura vs 11% random** (95% vs 26% a 500m);
+  distanza mediana **7m (coni) vs 1046m (random)** → i coni stanno *sulle* fissure. 171 fissure,
+  53 km; azimut dominante NE-SW. Fig `fig_fissures.png` (mappa + istogramma vs null + rosa).
+- **Scopo:** conferma geologica ("i coni si allineano lungo le fissure", *linear geological patterns*)
+  — non parte del detector; chiude il progetto.
+- **Nota:** solo qualitativo; `pericolosi` NON usato (tematico). Il median 7m suggerisce che le
+  fissure sono digitalizzate lungo i coni → ovvio che combacino, ma il null 11% mostra che NON è
+  casuale.
+- **Test:** ✔ frazione altissima di coni vicino a fissura (91%) vs random (11%).
 
 ---
 
