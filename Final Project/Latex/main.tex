@@ -8,6 +8,7 @@
 \usepackage{float}     % enables [H] to pin each figure exactly where it is written
 \usepackage{parskip}   % blank line between paragraphs, no first-line indent (notebook-like reading)
 \emergencystretch=2em  % avoid text overflowing the right margin (long \texttt / inline math)
+\setcounter{secnumdepth}{1}  % number sections only; subsections keep their "Step X" name (no 2.1/3.1 clash with the step numbers)
 
 \title{Automatic Detection of Scoria Cones from DEMs}
 \author{Gabriele Berruti (4791919)\\Computational Vision --- University of Genoa}
@@ -106,24 +107,23 @@ fine surface detail.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_channels_1.png}
+\includegraphics[width=0.49\textwidth]{figures/fig_channels_1.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_channels_2.png}
 
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_channels_2.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_channels_3.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_channels_4.png}
-\caption{El Hierro: the raw DEM (top) is visually flat, while the Eduard renderings
-reveal the conical landforms.}
+\vspace{8pt}
+\includegraphics[width=0.49\textwidth]{figures/fig_channels_3.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_channels_4.png}
+\caption{El Hierro: the raw DEM (top-left) is visually flat, while the Eduard renderings
+(NE and NW shading, top-right and bottom-left; texture shading, bottom-right) reveal the
+conical landforms.}
 \label{fig:channels}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_gt_1.png}
-
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_gt_2.png}
-\caption{Ground truth on El Hierro. Top: the 196 crater outlines (Id$=2$). Bottom: a
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_gt_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_gt_2.png}
+\caption{Ground truth on El Hierro. Left: the 196 crater outlines (Id$=2$). Right: a
 zoom on the closest pair of crater centroids ($25$\,m apart).}
 \label{fig:gt}
 \end{figure}
@@ -140,13 +140,12 @@ must separate.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_adjacent_1.png}
+\includegraphics[width=0.49\textwidth]{figures/fig_adjacent_1.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_adjacent_2.png}
 
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_adjacent_2.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_adjacent_3.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_adjacent_4.png}
+\vspace{8pt}
+\includegraphics[width=0.49\textwidth]{figures/fig_adjacent_3.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_adjacent_4.png}
 \caption{The adjacent/nested cases on El Hierro: the 4 crater pairs whose outlines
 overlap (8 craters). The watershed step is designed to split exactly these.}
 \label{fig:adjacent}
@@ -210,11 +209,11 @@ their constants.
 (i) The three Eduard renderings share the DEM grid exactly (same $5081\times5681$ shape and
 transform), so overlays are pixel-exact.
 
-(ii) The equivalent radius of the crater outlines (Figure~\ref{fig:stats}, top) has median
+(ii) The equivalent radius of the crater outlines (Figure~\ref{fig:stats}, left) has median
 $71$\,m and a 5th--95th percentile range of $20$--$174$\,m, which we adopt as the LoG
 detector scale range.
 
-(iii) The nearest-neighbour distance between craters (Figure~\ref{fig:stats}, bottom) has
+(iii) The nearest-neighbour distance between craters (Figure~\ref{fig:stats}, right) has
 median $418$\,m but a minimum of $25$\,m, and $8/196$ craters ($4\%$) lie closer to a
 neighbour than the sum of the two radii, i.e. they are adjacent or nested.
 
@@ -223,11 +222,10 @@ watershed step is designed to recover.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_data_stats_1.png}
-
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_data_stats_2.png}
-\caption{El Hierro crater statistics. Top: equivalent-radius distribution, used to set
-the LoG scale range. Bottom: nearest-neighbour distance distribution; the dashed line is
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_data_stats_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_data_stats_2.png}
+\caption{El Hierro crater statistics. Left: equivalent-radius distribution, used to set
+the LoG scale range. Right: nearest-neighbour distance distribution; the dashed line is
 the median radius, and the cones below it are the adjacent/nested cases.}
 \label{fig:stats}
 \end{figure}
@@ -263,15 +261,15 @@ each cone (bottom-right panel).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_morphometric_1.png}
+\includegraphics[width=0.49\textwidth]{figures/fig_morphometric_1.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_morphometric_2.png}
 
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_morphometric_2.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_morphometric_3.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_morphometric_4.png}
-\caption{Morphometric channels derived from the El Hierro DEM: slope, aspect and roughness,
-plus a zoom of the aspect showing the radial pattern around a single cone.}
+\vspace{8pt}
+\includegraphics[width=0.49\textwidth]{figures/fig_morphometric_3.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_morphometric_4.png}
+\caption{Morphometric channels derived from the El Hierro DEM: slope (top-left), aspect
+(top-right) and roughness (bottom-left), plus a zoom of the aspect (bottom-right) showing
+the radial pattern around a single cone.}
 \label{fig:morpho}
 \end{figure}
 
@@ -308,17 +306,16 @@ the two fixed renders --- from only two precomputed filters.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_steerable_1.png}
+\includegraphics[width=0.49\textwidth]{figures/fig_steerable_1.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_steerable_2.png}
 
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_steerable_2.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_steerable_3.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_steerable_4.png}
-\caption{Synthetic hillshade on El Hierro from the steerable $G_1$ filters. Top: synthetic NE
-($45^\circ$) next to the supplied Eduard NE render (correlation $0.81$). Bottom: the same
-basis re-steered to NW ($315^\circ$) and SE ($135^\circ$), showing the illumination rotating
-coherently.}
+\vspace{8pt}
+\includegraphics[width=0.49\textwidth]{figures/fig_steerable_3.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_steerable_4.png}
+\caption{Synthetic hillshade on El Hierro from the steerable $G_1$ filters. Top row: synthetic
+NE ($45^\circ$, left) next to the supplied Eduard NE render (right; correlation $0.81$). Bottom
+row: the same basis re-steered to NW ($315^\circ$) and SE ($135^\circ$), showing the illumination
+rotating coherently.}
 \label{fig:steer}
 \end{figure}
 
@@ -348,16 +345,16 @@ will be rejected later by the classifier (Step~7).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_mask_1.png}
+\includegraphics[width=0.49\textwidth]{figures/fig_mask_1.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_mask_2.png}
 
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_mask_2.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_mask_3.png}
-
-\includegraphics[width=\textwidth,height=0.21\textheight,keepaspectratio]{figures/fig_mask_4.png}
-\caption{Data-driven morphometric mask on El Hierro. (1) Otsu threshold on the slope histogram
-($17.6^\circ$); (2) the resulting binary mask, keeping $31\%$ of the island; (3) the mask (red)
-over the synthetic NE hillshade; (4) a zoom showing the mask wrapping a single cone flank.}
+\vspace{8pt}
+\includegraphics[width=0.49\textwidth]{figures/fig_mask_3.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/fig_mask_4.png}
+\caption{Data-driven morphometric mask on El Hierro. (1, top-left) Otsu threshold on the slope
+histogram ($17.6^\circ$); (2, top-right) the resulting binary mask, keeping $31\%$ of the island;
+(3, bottom-left) the mask (red) over the synthetic NE hillshade; (4, bottom-right) a zoom showing
+the mask wrapping a single cone flank.}
 \label{fig:mask}
 \end{figure}
 
@@ -401,19 +398,18 @@ real detector must output \textbf{one detection per cone}.
 
 Enforcing a one-to-one assignment, only $186/196$ cones keep a unique detection: \textbf{$10$
 cones} (the reference reports $11$) are lost because neighbours compete for the same candidate
-blobs (Figure~\ref{fig:log}, bottom).
+blobs (Figure~\ref{fig:log}, right).
 
 Point-based blob detection cannot separate them --- this is precisely the $\approx$\,$5\%$ gap
 that the watershed of Step~5 is built to close.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_log_1.png}
-
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_log_2.png}
-\caption{Step~4 on El Hierro. Top: density of the $22{,}065$ permissive LoG candidates over the
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_log_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_log_2.png}
+\caption{Step~4 on El Hierro. Left: density of the $22{,}065$ permissive LoG candidates over the
 hillshade (recall $0.96$, precision $0.009$); the pool concentrates on steep terrain but is
-dominated by false positives. Bottom: zoom on an adjacent cone pair (cyan) surrounded by dozens of
+dominated by false positives. Right: zoom on an adjacent cone pair (cyan) surrounded by dozens of
 overlapping candidates, where no clean one-detection-per-cone assignment exists.}
 \label{fig:log}
 \end{figure}
@@ -471,11 +467,10 @@ over-segmentation, pruned later by the Random Forest exactly as for the LoG pool
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_watershed_1.png}
-
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_watershed_2.png}
-\caption{Step~5 on El Hierro. Top: the marker-controlled watershed partitions the island into
-basins, one per detected summit (it over-segments, as expected). Bottom: zoom on an adjacent cone
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_watershed_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_watershed_2.png}
+\caption{Step~5 on El Hierro. Left: the marker-controlled watershed partitions the island into
+basins, one per detected summit (it over-segments, as expected). Right: zoom on an adjacent cone
 pair (cyan) that the LoG baseline merged into a single detection; the watershed draws a boundary
 along the saddle (yellow) and assigns each crater its own basin.}
 \label{fig:watershed}
@@ -538,12 +533,11 @@ one-to-one rule loses. $^\ast$Step~6 is the optional extension.}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_multiscale_1.png}
-
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_multiscale_2.png}
-\caption{Step~6 on El Hierro. Top: zoom on an overlapping cone pair (cyan); the yellow circles are
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_multiscale_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_multiscale_2.png}
+\caption{Step~6 on El Hierro. Left: zoom on an overlapping cone pair (cyan); the yellow circles are
 the Step~4 baseline blobs and the red circles the extra multi-scale responses kept by
-\texttt{overlap}\,$=1.0$. Bottom: the strict one-detection-per-cone assignment loses $10$ cones with
+\texttt{overlap}\,$=1.0$. Right: the strict one-detection-per-cone assignment loses $10$ cones with
 the baseline pool but only $5$ once nested scales are retained.}
 \label{fig:multiscale}
 \end{figure}
@@ -576,11 +570,11 @@ Several alternatives were tried and discarded: basin centroids as the watershed 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_rf_1.png}
+\includegraphics[width=0.49\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_rf_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_rf_2.png}
 
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_rf_2.png}
-
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_rf_3.png}
+\vspace{8pt}
+\includegraphics[width=0.62\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_rf_3.png}
 \caption{Step~7 on El Hierro. \emph{A:} the Random Forest prunes the union pool $\sim 5\times$ (grey: all
 $17{,}296$ candidates; red: the ones kept; cyan: the $196$ ground-truth craters). \emph{B:} out-of-fold
 precision--recall curve (AP $=0.126$) well above the candidate prior ($0.035$). \emph{C:} feature
@@ -621,9 +615,8 @@ Step 5\,$+$\,6 & $17{,}296$ & $183/196$ & $0.13$ & $157/196$ & $0.10$ & $\mathbf
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_ablation_1.png}
-
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_ablation_2.png}
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_ablation_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_ablation_2.png}
 \caption{Step~7.5 on El Hierro. \emph{A:} goal metrics --- adding Step~6 (red) raises recall and takes
 pair separation from $1/4$ to $4/4$, while lowering the kept-set precision. \emph{B:} the Step-5-only pool
 is cleaner and ranks better (higher AP), but cannot cover the merged cones; the union is the pool that
@@ -633,7 +626,7 @@ delivers the separation.}
 
 \subsection{Step 8 --- Evaluation: proving the contribution}
 
-This is the scorecard: the chosen pipeline (Step~7.5 picked Step 5\,$+$\,6, RF-pruned) against the baseline every blob detector starts from --- LoG candidates with greedy one-to-one matching, the Frattini-style detector.
+This is the scorecard: the chosen pipeline (Step~7.5 picked Step 5\,$+$\,6, RF-pruned) against the baseline every blob detector starts from --- LoG candidates with greedy one-to-one matching .
 
 Both are scored under identical rules and a single honest tolerance: a detection matches a crater if it lands within one crater radius (minimum $80$\,m).
 
@@ -670,9 +663,8 @@ pairs separated   & $3/4$      & $\mathbf{4/4}$ \\
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_eval_1.png}
-
-\includegraphics[width=\textwidth,height=0.43\textheight,keepaspectratio]{figures/fig_eval_2.png}
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_eval_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.42\textheight,keepaspectratio]{figures/fig_eval_2.png}
 \caption{Step~8 on El Hierro. \emph{A:} detection scorecard --- the pipeline (red) beats the LoG\,$+$\,greedy
 baseline (grey) on recall, precision, F1 and IoU. \emph{B:} a touching pair (cyan): the baseline blobs
 (yellow) collapse onto one cone, while our detections (red crosses) keep one on each.}
@@ -701,11 +693,11 @@ The takeaway is a robustness statement about the features, not a transferred det
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_jeju_1.png}
+\includegraphics[width=0.49\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_jeju_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_jeju_2.png}
 
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_jeju_2.png}
-
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_jeju_3.png}
+\vspace{8pt}
+\includegraphics[width=0.62\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_jeju_3.png}
 \caption{Step~9 on Jeju (no ground truth). \emph{A:} the unsupervised cone-like cluster (red) over the
 NE shading, $\sim 6\%$ of the land. \emph{B:} zoom on a lava plain --- the cluster blobs land on the
 individual oreum (SLIC superpixel edges in yellow). \emph{C:} Davies--Bouldin model selection picks
@@ -731,11 +723,11 @@ Together the two Jeju steps give the full picture: the \emph{representation} gen
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_zeroshot_1.png}
+\includegraphics[width=0.49\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_zeroshot_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_zeroshot_2.png}
 
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_zeroshot_2.png}
-
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_zeroshot_3.png}
+\vspace{8pt}
+\includegraphics[width=0.62\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_zeroshot_3.png}
 \caption{Step~9.5 on Jeju: zero-shot transfer of the El Hierro Random Forest. \emph{A:} at the unchanged
 El Hierro threshold the model over-fires ($\sim 1{,}900$ detections). \emph{B:} detections vs threshold
 --- the operating point must be recalibrated (literature $\sim 360$ in green, El Hierro threshold in red).
@@ -759,11 +751,11 @@ This is a geological sanity check, not part of the detector, but it confirms tha
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_fissures_1.png}
+\includegraphics[width=0.49\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_fissures_1.png}\hfill
+\includegraphics[width=0.49\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_fissures_2.png}
 
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_fissures_2.png}
-
-\includegraphics[width=\textwidth,height=0.29\textheight,keepaspectratio]{figures/fig_fissures_3.png}
+\vspace{8pt}
+\includegraphics[width=0.62\textwidth,height=0.34\textheight,keepaspectratio]{figures/fig_fissures_3.png}
 \caption{Step~10 on El Hierro. \emph{A:} the mapped cones (red) lie along the eruptive fissures (blue).
 \emph{B:} cone-to-nearest-fissure distance versus a random-points null --- $91\%$ of cones fall within
 $250$\,m of a fissure (random $11\%$). \emph{C:} rose of fissure azimuths, showing the preferred swarm
